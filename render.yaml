@@ -1,0 +1,16 @@
+# Render Blueprint — deploy this project with one click (New -> Blueprint, or
+# point a Render Web Service at the repo and it reads this file).
+# This declares the FastAPI backend service so you don't have to hand-type
+# build/start commands (which is where the missing "--port" value crept in).
+services:
+  - type: web
+    name: kiranastore-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
