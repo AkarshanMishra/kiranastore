@@ -1,0 +1,58 @@
+# ===== Node / npm (NEVER commit dependencies & builds) =====
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# ===== Python / FastAPI backend =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# ===== Environment & secrets (NEVER commit) =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ===== Database files (contain real data) =====
+*.sqlite3
+*.db
+*.sqlite
+*.sql
+
+# ===== Logs & temp =====
+*.log
+*.tmp
+*.bak
+runner_out.log
+runner_err.log
+
+# ===== Android / Capacitor build artifacts =====
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/capacitor-cordova-android-plugins/build/
+frontend/android/local.properties
+frontend/android/.idea/
+frontend/android/.cxx/
+*.apk
+*.aab
+
+# ===== Capacitor generated runtime files (optional; keep source project clean) =====
+frontend/android/app/src/main/assets/
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE / editor =====
+.vscode/
+.idea/
+*.iml

@@ -1,0 +1,130 @@
+===============================================================================
+       KIRANASTORE - COMPLETE GUIDE: SYNC CUSTOMER APP & ADMIN DASHBOARD
+               (Across Different Networks, 4G/5G, and Remote Locations)
+                    Developed by Akarshan Mishra
+===============================================================================
+
+WHY THIS IS NEEDED:
+--------------------
+- Your Admin Dashboard & Backend run on your PC/Laptop (Port 8000 and 3001).
+- Your Customer App (APK) runs on an Android mobile phone.
+- If your phone is on Mobile Data (4G/5G) or a different Wi-Fi network, it cannot 
+  reach 'localhost' on your computer directly without a tunnel, LAN IP, or cloud host.
+
+Here are the 3 COMPLETE SOLUTIONS with step-by-step instructions.
+
+===============================================================================
+SOLUTION 1: 1-CLICK FREE CLOUD TUNNEL (RECOMMENDED - INSTANT & ZERO SETUP)
+===============================================================================
+This connects your Phone (on 4G/5G anywhere in the world) to your PC instantly 
+using a free, secure Cloudflare / LocalTunnel link.
+
+STEP 1: Start your KiranaStore Servers on your PC
+  - In the project root folder, double-click:
+    START_ALL_SERVERS.bat
+  - This launches your FastAPI Backend (Port 8000), Customer Web App (Port 3000), 
+    and Admin Dashboard (Port 3001) in separate windows.
+
+STEP 2: Launch the Online Cloud Tunnel on your PC
+  - In the project root folder, double-click:
+    START_ONLINE_TUNNEL.bat
+  - A black terminal window will open and generate a public secure HTTPS URL, 
+    for example:
+    https://sweet-morning-tunnel.trycloudflare.com
+    (or a .loca.lt URL)
+  - Keep this window OPEN in the background while you are taking orders.
+
+STEP 3: Connect your Customer Mobile Phone (APK)
+  - Open the KiranaStore APK on your Android phone (on 4G/5G or any Wi-Fi).
+  - Tap the 'Profile' icon in the bottom navigation bar.
+  - Scroll down to 'SUPPORT, APP & PRIVACY' and tap:
+    'Cloud Sync & Server Connection'
+  - In the text box, paste your public URL from Step 2:
+    e.g. https://sweet-morning-tunnel.trycloudflare.com
+  - Tap 'Test Server Connection / Ping'. You will see:
+    'Connected successfully (XXms)!' in green.
+  - Tap 'Save & Sync App'.
+
+STEP 4: Verify Real-Time Sync
+  - Place a test grocery or monthly rashan order on your phone.
+  - Look at your PC Admin Dashboard (http://localhost:3001) -> 'Orders' tab.
+  - The new order will immediately ring and appear on your PC in real-time!
+
+
+===============================================================================
+SOLUTION 2: SAME LOCAL WI-FI (HOME / SHOP LOCAL AREA NETWORK)
+===============================================================================
+Use this when your PC and your testing mobile phone are connected to the SAME 
+Wi-Fi router or mobile hotspot in your shop/home.
+
+STEP 1: Find your PC IP Address
+  - On your PC, press Windows Key + R, type 'cmd' and press Enter.
+  - In the command prompt, type:
+    ipconfig
+  - Look for 'IPv4 Address', for example: 10.73.103.44 or 192.168.1.15.
+
+STEP 2: Start the Servers
+  - Double-click START_ALL_SERVERS.bat.
+
+STEP 3: Configure Customer Phone APK
+  - Open the APK on your phone (must be connected to the same Wi-Fi).
+  - Go to Profile -> 'Cloud Sync & Server Connection'.
+  - Tap the preset button: 'Shop Wi-Fi IP' or enter:
+    http://YOUR_PC_IP:8000  (e.g. http://10.73.103.44:8000)
+  - Tap 'Test Server Connection' -> 'Save & Sync App'.
+
+STEP 4: Access Admin Dashboard from any device on the Wi-Fi
+  - On any tablet, mobile phone, or secondary laptop on the same Wi-Fi, open:
+    http://YOUR_PC_IP:3001  (e.g. http://10.73.103.44:3001)
+
+
+===============================================================================
+SOLUTION 3: PERMANENT 24/7 FREE CLOUD HOSTING (RENDER.COM / RAILWAY)
+===============================================================================
+Use this if you want your backend database and API to run in the cloud 24/7, 
+even when your PC is turned off or you are traveling.
+
+STEP 1: Create a free account on Render (https://render.com) or Railway.app.
+
+STEP 2: Push your project code to GitHub:
+  - Create a new GitHub repository named 'kiranastore'.
+  - Push the 'backend/' folder or full codebase to GitHub.
+
+STEP 3: Deploy FastAPI Backend on Render:
+  - Click 'New +' -> 'Web Service'.
+  - Select your GitHub repository.
+  - Set Environment: Python 3
+  - Set Root Directory: backend
+  - Set Build Command: pip install -r requirements.txt
+  - Set Start Command: uvicorn main:app --host 0.0.0.0 --port 
+  - Click 'Create Web Service' (Free Tier).
+
+STEP 4: Get your Permanent Public Backend URL
+  - Render will provide a permanent URL like:
+    https://kiranastore-api.onrender.com
+
+STEP 5: Save in Customer App & Admin
+  - In the Customer Phone APK -> Profile -> 'Cloud Sync & Server Connection':
+    Enter: https://kiranastore-api.onrender.com
+  - Both Customer App and Admin Portal will stay synchronized 24 hours a day, 
+    7 days a week, from any phone anywhere in the world!
+
+
+===============================================================================
+QUICK TROUBLESHOOTING & PRO TIPS
+===============================================================================
+1. Windows Firewall blocking connections?
+   - If Local Wi-Fi connection (Solution 2) fails to ping:
+     Open Windows Defender Firewall -> 'Allow an app through firewall' -> 
+     Allow Python and Node.js for Private & Public networks.
+
+2. Offline / Fallback Catalog:
+   - If the phone loses internet entirely, the customer app automatically 
+     switches to the built-in 46+ product catalog so customers can still browse 
+     all 12 aisles smoothly.
+
+3. Updating APK:
+   - To compile and generate a fresh APK after any design change:
+     Double-click BUILD_UPDATE_APK.bat in the project folder.
+
+===============================================================================

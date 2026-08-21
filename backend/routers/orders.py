@@ -1,0 +1,207 @@
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from sqlalchemy.orm import Session
+from typing import List, Optional
+import random
+import string
+import asyncio
+from database import get_db
+from models import Order, OrderItem, Product, Customer
+from schemas import OrderCreateSchema, OrderSchema
+from routers.websocket import manager
+
+router = APIRouter(prefix="/api", tags=["orders"])
+
+def generate_order_number(prefix="KS"):
+    rand_digits = ''.join(random.choices(string.digits, k=5))
+    return f"{prefix}-{rand_digits}"
+
+@router.post("/orders", response_model=OrderSchema)
+async def create_order(
+    payload: OrderCreateSchema,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    is_rashan_slip = payload.order_type == "MONTHLY_RASHAN_SLIP"
+    if not is_rashan_slip and not payload.items:
+        raise HTTPException(status_code=400, detail="Order must contain at least one item")
+
+    subtotal = 0.0
+    order_items_to_create = []
+
+    if payload.items:
+        for item_req in payload.items:
+            product = db.query(Product).filter(Product.id == item_req.product_id).first()
+            if not product:
+                # Custom item or direct list item
+                effective_price = 100.0
+                order_items_to_create.append({
+                    "product_id": item_req.product_id,
+                    "product_name": f"Monthly Item #{item_req.product_id}",
+                    "quantity": item_req.quantity,
+                    "price": effective_price,
+                    "image_url": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=200&q=80"
+                })
+                subtotal += effective_price * item_req.quantity
+                continue
+
+            if not product.in_stock or product.stock < item_req.quantity:
+                # Still allow rashan order if stock is tracked loosely
+                pass
+
+            effective_price = product.discount_price if product.discount_price else product.price
+            item_total = effective_price * item_req.quantity
+            subtotal += item_total
+
+            # Deduct stock if available
+            if product.stock >= item_req.quantity:
+                product.stock -= item_req.quantity
+
+            order_items_to_create.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "quantity": item_req.quantity,
+                "price": effective_price,
+                "image_url": product.image_url
+            })
+
+    if is_rashan_slip:
+        subtotal = payload.estimated_amount or 0.0
+        delivery_fee = 0.0
+        handling_fee = 0.0
+        total_amount = subtotal
+    else:
+        delivery_fee = 15.0 if subtotal < 199 else 0.0
+        handling_fee = 2.0
+        total_amount = max(0.0, subtotal + delivery_fee + handling_fee + payload.tip - payload.discount)
+
+    order_num = generate_order_number("RASHAN" if is_rashan_slip else "KS")
+
+    new_order = Order(
+        order_number=order_num,
+        user_name=payload.user_name,
+        phone=payload.phone,
+        delivery_address=payload.delivery_address,
+        subtotal=subtotal,
+        delivery_fee=delivery_fee,
+        handling_fee=handling_fee,
+        tip=payload.tip,
+        discount=payload.discount,
+        total_amount=total_amount,
+        payment_method=payload.payment_method,
+        payment_status="PENDING_VERIFICATION" if is_rashan_slip else "PAID",
+        order_status="PLACED",
+        delivery_slot_type=payload.delivery_slot_type or "SAME_DAY",
+        scheduled_delivery_date=payload.scheduled_delivery_date,
+        scheduled_delivery_time=payload.scheduled_delivery_time,
+        order_type=payload.order_type or "NORMAL",
+        hub_name=payload.hub_name or "Sector 62 Express Dark Store",
+        slip_image_url=payload.slip_image_url,
+        special_instructions=payload.special_instructions,
+        accepted_by_owner=False,
+        eta_minutes=30
+    )
+
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    for item_data in order_items_to_create:
+        item = OrderItem(order_id=new_order.id, **item_data)
+        db.add(item)
+
+    # Automatically Sync or Create Customer in database
+    try:
+        clean_p = payload.phone.replace("+91", "").replace(" ", "").strip()
+        existing_cust = db.query(Customer).filter(Customer.phone.like(f"%{clean_p}%")).first()
+        if existing_cust:
+            existing_cust.name = payload.user_name
+            existing_cust.address = payload.delivery_address
+            existing_cust.total_orders = (existing_cust.total_orders or 0) + 1
+            existing_cust.total_spent = (existing_cust.total_spent or 0.0) + total_amount
+        else:
+            new_cust = Customer(
+                name=payload.user_name,
+                phone=payload.phone,
+                email=f"{clean_p}@kiranastore.com",
+                address=payload.delivery_address,
+                wallet_balance=100.0,
+                total_orders=1,
+                total_spent=total_amount,
+                status="ACTIVE"
+            )
+            db.add(new_cust)
+    except Exception as e:
+        print("Customer sync error:", e)
+
+    db.commit()
+    db.refresh(new_order)
+
+    # Broadcast to admin and customer sockets
+    try:
+        await manager.broadcast_order_update(order_num, {
+            "order_number": order_num,
+            "order_status": "PLACED",
+            "order_type": new_order.order_type,
+            "hub_name": new_order.hub_name,
+            "message": "New Monthly Rashan Order received! 🛒"
+        })
+    except Exception:
+        pass
+
+    return new_order
+
+@router.get("/orders/{order_number}", response_model=OrderSchema)
+def get_order_by_number(order_number: str, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.order_number == order_number).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+from schemas import OrderCreateSchema, OrderSchema, CustomerCreateSchema, CustomerSchema
+
+@router.post("/customers", response_model=CustomerSchema)
+def register_or_sync_customer(payload: CustomerCreateSchema, db: Session = Depends(get_db)):
+    clean_p = payload.phone.replace("+91", "").replace(" ", "").strip()
+    existing = db.query(Customer).filter(Customer.phone.like(f"%{clean_p}%")).first()
+    if existing:
+        existing.name = payload.name
+        if payload.email:
+            existing.email = payload.email
+        if payload.address:
+            existing.address = payload.address
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    new_cust = Customer(
+        name=payload.name,
+        phone=payload.phone,
+        email=payload.email,
+        address=payload.address,
+        wallet_balance=payload.wallet_balance or 100.0,
+        total_orders=0,
+        total_spent=0.0,
+        status="ACTIVE"
+    )
+    db.add(new_cust)
+    db.commit()
+    db.refresh(new_cust)
+    return new_cust
+
+@router.get("/orders", response_model=List[OrderSchema])
+def list_orders(phone: Optional[str] = None, db: Session = Depends(get_db)):
+    if not phone:
+        return []
+
+    # Match normalized 10-digit phone
+    clean_digits = ''.join(c for c in phone if c.isdigit())
+    if len(clean_digits) >= 10:
+        match_phone = clean_digits[-10:]
+    elif clean_digits:
+        match_phone = clean_digits
+    else:
+        return []
+
+    orders = db.query(Order).filter(Order.phone.like(f"%{match_phone}%")).order_by(Order.created_at.desc()).limit(50).all()
+    return orders
+

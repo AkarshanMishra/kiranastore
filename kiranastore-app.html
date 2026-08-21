@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KiranaStore | Fast Express Grocery Delivery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-green': '#0c831f',
+            'brand-yellow': '#f7c325'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+    .product-card { transition: all 0.2s; }
+    .btn-add:hover { background: #0a6e1a; }
+    .qty-btn:hover { background: #0a6e1a; }
+    input:focus { outline: none; border-color: #0c831f; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+  <div class="bg-gradient-to-r from-emerald-700 to-teal-700 text-white text-xs py-1.5 text-center font-bold">
+    ⚡ FAST EXPRESS HOME DELIVERY — DIRECT FROM YOUR LOCAL KIRANA STORE &nbsp;|&nbsp; FREE DELIVERY OVER ₹500
+  </div>
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+    <div class="font-black text-xl tracking-tight flex-shrink-0">
+      Kirana<span class="text-green-600">Store</span>
+      <span class="text-xs bg-green-100 text-green-700 font-extrabold px-2 py-0.5 rounded-full ml-1">⚡ EXPRESS</span>
+    </div>
+
+    <!-- Location Pill -->
+    <button onclick="detectGPSLocation()" id="locationBtn" class="hidden sm:flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-800 border border-green-200 px-3 py-1.5 rounded-2xl text-xs font-bold transition">
+      <span>📍</span>
+      <span id="locationText" class="truncate max-w-[150px]">Sector 62, Noida</span>
+      <span class="text-[10px] bg-green-200 px-1.5 py-0.5 rounded-full font-black">GPS</span>
+    </button>
+
+    <div class="flex-1 relative max-w-lg">
+      <input id="searchInput" type="text" placeholder="Search milk, paneer, chips, atta..." 
+        class="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:bg-white transition"
+        oninput="filterProducts(this.value)"/>
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </div>
+    <button onclick="openCart()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-2xl font-black text-sm flex items-center gap-2 shadow transition">
+      🛍️ <span id="cartBadge">0 items</span> | ₹<span id="cartTotal">0</span>
+    </button>
+  </div>
+
+  <!-- Category Bar -->
+  <div class="max-w-7xl mx-auto px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
+    <button onclick="filterCategory('all')" id="cat-all" class="cat-btn flex-shrink-0 bg-green-600 text-white px-4 py-1.5 rounded-xl text-xs font-extrabold">All Items</button>
+    <button onclick="filterCategory('dairy')" id="cat-dairy" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🥛 Dairy & Eggs</button>
+    <button onclick="filterCategory('snacks')" id="cat-snacks" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🍿 Snacks</button>
+    <button onclick="filterCategory('staples')" id="cat-staples" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🌾 Atta & Rice</button>
+    <button onclick="filterCategory('beverages')" id="cat-beverages" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🥤 Beverages</button>
+    <button onclick="filterCategory('fruits')" id="cat-fruits" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🍎 Fruits & Veg</button>
+    <button onclick="filterCategory('personal')" id="cat-personal" class="cat-btn flex-shrink-0 bg-white border border-gray-200 text-gray-700 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-gray-50">🧴 Personal Care</button>
+  </div>
+</nav>
+
+<!-- HERO BANNERS -->
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-2">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-3xl p-5 shadow-sm flex flex-col justify-between min-h-[130px] relative overflow-hidden">
+      <span class="bg-yellow-400 text-gray-900 font-extrabold text-xs px-2 py-0.5 rounded w-fit">Superfast</span>
+      <h3 class="text-xl font-black mt-2 leading-tight">Express Home Delivery<br/>Or Free Products!</h3>
+      <div class="absolute right-2 bottom-0 text-white/10 text-9xl font-black">⚡</div>
+    </div>
+    <div class="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-3xl p-5 shadow-sm flex flex-col justify-between min-h-[130px]">
+      <span class="bg-white text-orange-700 font-extrabold text-xs px-2 py-0.5 rounded w-fit">Fresh Daily</span>
+      <h3 class="text-xl font-black mt-2 leading-tight">Milk, Paneer & Eggs<br/>Direct From Dairy</h3>
+      <p class="text-xs text-orange-100">Chilled & delivered in temperature-safe bags</p>
+    </div>
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-3xl p-5 shadow-sm flex flex-col justify-between min-h-[130px]">
+      <span class="bg-pink-400 text-gray-900 font-extrabold text-xs px-2 py-0.5 rounded w-fit">Deals</span>
+      <h3 class="text-xl font-black mt-2 leading-tight">Snacks & Munchies<br/>Up to 40% OFF</h3>
+      <p class="text-xs text-purple-200">Instant delivery available 24/7</p>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTS GRID -->
+<div class="max-w-7xl mx-auto px-4 py-4">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-black text-gray-900">Trending Grocery Items ✨</h2>
+    <span id="productCount" class="text-xs font-bold text-gray-400"></span>
+  </div>
+  <div id="productsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+</div>
+
+<!-- CART DRAWER -->
+<div id="cartOverlay" class="fixed inset-0 bg-black/60 z-50 hidden" onclick="closeCart()"></div>
+<div id="cartDrawer" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col transform translate-x-full transition-transform duration-300">
+  <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+    <h2 class="font-black text-lg">My Cart</h2>
+    <button onclick="closeCart()" class="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-700">✕</button>
+  </div>
+  <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+  <div class="p-4 border-t border-gray-200">
+    <div class="flex justify-between text-sm font-bold text-gray-600 mb-2">
+      <span>Delivery Fee:</span>
+      <span id="deliveryFeeText" class="text-green-600 font-extrabold">FREE</span>
+    </div>
+    <div class="flex justify-between text-base font-black text-gray-900 mb-4">
+      <span>Grand Total:</span>
+      <span>₹<span id="grandTotal">0</span></span>
+    </div>
+    <button onclick="placeOrder()" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-3.5 rounded-2xl shadow-lg transition text-sm">
+      Place Order & Pay →
+    </button>
+    <p class="text-center text-xs text-gray-400 mt-2">🔒 Secure Payment via Razorpay</p>
+  </div>
+</div>
+
+<!-- ORDER SUCCESS MODAL -->
+<div id="successModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+    <div class="text-6xl mb-4">🎉</div>
+    <h3 class="font-black text-xl text-gray-900 mb-2">Order Placed!</h3>
+    <p class="text-sm text-gray-500 mb-4">Your order has been received and is being prepared at Dark Store #402.</p>
+    <div class="bg-green-50 border border-green-200 rounded-2xl p-3 text-sm font-extrabold text-green-700 mb-6">
+      ⚡ Express Delivery Dispatched
+    </div>
+    <button onclick="closeSuccess()" class="w-full bg-green-600 text-white font-black py-3 rounded-2xl shadow">
+      Continue Shopping
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── PRODUCT DATA ────────────────────────────────────────────────────────────
+const ALL_PRODUCTS = [
+  // Dairy
+  {id:1, name:'Amul Taaza Toned Milk', weight:'500 ml', price:27, disc:25, rating:4.9, img:'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=200&q=80', cat:'dairy'},
+  {id:2, name:'Fresh Malai Paneer Block', weight:'200 g', price:95, disc:89, rating:4.8, img:'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=200&q=80', cat:'dairy'},
+  {id:3, name:'Amul Butter Salted', weight:'100 g', price:56, disc:52, rating:4.9, img:'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=200&q=80', cat:'dairy'},
+  {id:4, name:'Farm Fresh Brown Eggs', weight:'6 pcs', price:68, disc:62, rating:4.8, img:'https://images.unsplash.com/photo-1562967914-608f82629710?w=200&q=80', cat:'dairy'},
+  {id:5, name:'Amul Dahi Probiotic Curd', weight:'400 g', price:46, disc:42, rating:4.7, img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&q=80', cat:'dairy'},
+  {id:6, name:'Mother Dairy Mishti Doi', weight:'200 g', price:38, disc:null, rating:4.6, img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&q=80', cat:'dairy'},
+  // Snacks
+  {id:7, name:'Lays Magic Masala Chips', weight:'50 g', price:20, disc:18, rating:4.7, img:'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=200&q=80', cat:'snacks'},
+  {id:8, name:'Maggi 2-Min Masala Noodles', weight:'280 g (4 Pack)', price:58, disc:52, rating:4.9, img:'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=200&q=80', cat:'snacks'},
+  {id:9, name:'Oreo Chocolate Cream Biscuit', weight:'120 g', price:35, disc:30, rating:4.8, img:'https://images.unsplash.com/photo-1509482560494-4126f8225994?w=200&q=80', cat:'snacks'},
+  {id:10, name:'Kurkure Masala Munch', weight:'90 g', price:28, disc:25, rating:4.6, img:'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=200&q=80', cat:'snacks'},
+  {id:11, name:'Britannia Good Day Butter Cookie', weight:'200 g', price:42, disc:38, rating:4.7, img:'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=200&q=80', cat:'snacks'},
+  {id:12, name:'Hide & Seek Chocolate Biscuit', weight:'120 g', price:32, disc:28, rating:4.6, img:'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=200&q=80', cat:'snacks'},
+  // Staples
+  {id:13, name:'Aashirvaad Chakki Atta', weight:'5 kg', price:245, disc:219, rating:4.9, img:'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=200&q=80', cat:'staples'},
+  {id:14, name:'India Gate Basmati Rice', weight:'5 kg', price:520, disc:480, rating:4.9, img:'https://images.unsplash.com/photo-1536304993881-ff86e0c9e17a?w=200&q=80', cat:'staples'},
+  {id:15, name:'Tata Sampann Chana Dal', weight:'1 kg', price:110, disc:98, rating:4.7, img:'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=200&q=80', cat:'staples'},
+  {id:16, name:'Fortune Mustard Oil', weight:'1 L', price:165, disc:145, rating:4.8, img:'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=200&q=80', cat:'staples'},
+  {id:17, name:'Amul Pure Cow Ghee', weight:'500 ml', price:360, disc:330, rating:4.9, img:'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=200&q=80', cat:'staples'},
+  {id:18, name:'MDH Everest Kitchen King Masala', weight:'100 g', price:70, disc:62, rating:4.8, img:'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=200&q=80', cat:'staples'},
+  // Beverages
+  {id:19, name:'Coca-Cola Soft Drink Can', weight:'300 ml', price:40, disc:35, rating:4.8, img:'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&q=80', cat:'beverages'},
+  {id:20, name:'Real Fruit Power Juice Orange', weight:'1 L', price:95, disc:85, rating:4.7, img:'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200&q=80', cat:'beverages'},
+  {id:21, name:'Red Bull Energy Drink', weight:'250 ml', price:125, disc:115, rating:4.8, img:'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200&q=80', cat:'beverages'},
+  {id:22, name:'Bisleri Mineral Water', weight:'1 L', price:20, disc:18, rating:4.9, img:'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=200&q=80', cat:'beverages'},
+  // Fruits
+  {id:23, name:'Fresh Bananas (Elaichi)', weight:'1 kg (6-7 pcs)', price:60, disc:49, rating:4.8, img:'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&q=80', cat:'fruits'},
+  {id:24, name:'Fresh Red Tomatoes', weight:'500 g', price:30, disc:25, rating:4.7, img:'https://images.unsplash.com/photo-1546094096-0df4bcabd337?w=200&q=80', cat:'fruits'},
+  {id:25, name:'Baby Spinach & Palak Leaves', weight:'250 g', price:35, disc:28, rating:4.6, img:'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=200&q=80', cat:'fruits'},
+  {id:26, name:'Crispy English Cucumber', weight:'500 g', price:28, disc:22, rating:4.7, img:'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=200&q=80', cat:'fruits'},
+  // Personal Care
+  {id:27, name:'Dove Moisturising Soap', weight:'75 g (3 Pack)', price:120, disc:108, rating:4.8, img:'https://images.unsplash.com/photo-1584305574647-0cc949a2bb9f?w=200&q=80', cat:'personal'},
+  {id:28, name:'Colgate Strong Teeth Toothpaste', weight:'200 g', price:90, disc:80, rating:4.9, img:'https://images.unsplash.com/photo-1571864125526-e7ce0a9e7fc7?w=200&q=80', cat:'personal'},
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let cart = {};
+let currentProducts = [...ALL_PRODUCTS];
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderProducts(products) {
+  const grid = document.getElementById('productsGrid');
+  document.getElementById('productCount').textContent = `Showing ${products.length} items`;
+  grid.innerHTML = products.map(p => {
+    const qty = cart[p.id] ? cart[p.id].qty : 0;
+    const price = p.disc || p.price;
+    const discPct = p.disc ? Math.round((p.price - p.disc) / p.price * 100) : 0;
+    return `
+      <div class="product-card bg-white border border-gray-100 rounded-3xl p-3 flex flex-col justify-between shadow-sm cursor-pointer">
+        <div class="relative rounded-2xl bg-gray-50 p-2 mb-2 flex items-center justify-center h-28 overflow-hidden">
+          <img src="${p.img}" alt="${p.name}" class="max-h-24 w-auto object-contain" onerror="this.src='https://via.placeholder.com/100x100?text=🛒'"/>
+          ${discPct > 0 ? `<span class="absolute bottom-1 left-1 bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded">${discPct}% OFF</span>` : ''}
+        </div>
+        <div class="flex-1 mb-2">
+          <span class="text-[10px] text-amber-600 font-bold">★ ${p.rating} &nbsp;·&nbsp; ${p.weight}</span>
+          <h3 class="text-xs font-bold text-gray-900 line-clamp-2 mt-0.5 leading-snug">${p.name}</h3>
+        </div>
+        <div class="flex items-center justify-between gap-1 pt-2 border-t border-gray-100">
+          <div>
+            <div class="text-sm font-black text-gray-900">₹${price}</div>
+            ${p.disc ? `<div class="text-[10px] text-gray-400 line-through">₹${p.price}</div>` : ''}
+          </div>
+          ${qty > 0 ? `
+            <div class="bg-green-600 text-white flex items-center rounded-xl overflow-hidden shadow-sm">
+              <button class="qty-btn px-2 py-1.5 text-base font-black" onclick="removeFromCart(${p.id})">−</button>
+              <span class="px-1.5 text-xs font-black">${qty}</span>
+              <button class="qty-btn px-2 py-1.5 text-base font-black" onclick="addToCart(${p.id})">+</button>
+            </div>
+          ` : `
+            <button class="btn-add bg-white hover:bg-green-600 text-green-600 hover:text-white border border-green-600 font-black text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1" onclick="addToCart(${p.id})">ADD +</button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addToCart(id) {
+  const p = ALL_PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  if (!cart[id]) cart[id] = { ...p, qty: 0 };
+  cart[id].qty++;
+  updateCartUI();
+  renderProducts(currentProducts);
+}
+
+function removeFromCart(id) {
+  if (!cart[id]) return;
+  cart[id].qty--;
+  if (cart[id].qty <= 0) delete cart[id];
+  updateCartUI();
+  renderProducts(currentProducts);
+}
+
+function updateCartUI() {
+  const items = Object.values(cart);
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
+  const totalPrice = items.reduce((s, i) => s + ((i.disc || i.price) * i.qty), 0);
+  const deliveryFee = totalPrice >= 500 ? 0 : 15;
+  const grandTotal = totalPrice + deliveryFee;
+
+  document.getElementById('cartBadge').textContent = totalQty + ' item' + (totalQty !== 1 ? 's' : '');
+  document.getElementById('cartTotal').textContent = totalPrice.toFixed(0);
+  document.getElementById('grandTotal').textContent = grandTotal.toFixed(0);
+  document.getElementById('deliveryFeeText').textContent = deliveryFee === 0 ? 'FREE ✓' : '₹' + deliveryFee;
+
+  const cartItems = document.getElementById('cartItems');
+  if (items.length === 0) {
+    cartItems.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-center py-16">
+      <div class="text-5xl mb-3">🛒</div>
+      <h3 class="font-bold text-gray-700">Your cart is empty</h3>
+      <p class="text-xs text-gray-400 mt-1">Add items from the store to get started</p>
+    </div>`;
+  } else {
+    cartItems.innerHTML = items.map(item => `
+      <div class="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
+        <img src="${item.img}" alt="${item.name}" class="w-12 h-12 object-contain rounded-xl bg-white"/>
+        <div class="flex-1 min-w-0">
+          <h4 class="text-xs font-bold text-gray-900 truncate">${item.name}</h4>
+          <div class="text-xs font-black text-gray-900">₹${((item.disc || item.price) * item.qty).toFixed(0)}</div>
+        </div>
+        <div class="bg-green-600 text-white flex items-center rounded-xl overflow-hidden">
+          <button class="qty-btn px-2 py-1 text-sm font-black" onclick="removeFromCart(${item.id})">−</button>
+          <span class="px-2 text-xs font-black">${item.qty}</span>
+          <button class="qty-btn px-2 py-1 text-sm font-black" onclick="addToCart(${item.id})">+</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function filterProducts(query) {
+  currentProducts = ALL_PRODUCTS.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+  renderProducts(currentProducts);
+}
+
+function filterCategory(cat) {
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.className = btn.className.replace('bg-green-600 text-white', 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50');
+  });
+  const activeBtn = document.getElementById('cat-' + cat);
+  if (activeBtn) {
+    activeBtn.className = activeBtn.className.replace('bg-white border border-gray-200 text-gray-700 hover:bg-gray-50', 'bg-green-600 text-white');
+  }
+  currentProducts = cat === 'all' ? [...ALL_PRODUCTS] : ALL_PRODUCTS.filter(p => p.cat === cat);
+  renderProducts(currentProducts);
+}
+
+function openCart() {
+  document.getElementById('cartOverlay').classList.remove('hidden');
+  document.getElementById('cartDrawer').style.transform = 'translateX(0)';
+}
+
+function closeCart() {
+  document.getElementById('cartOverlay').classList.add('hidden');
+  document.getElementById('cartDrawer').style.transform = 'translateX(100%)';
+}
+
+function placeOrder() {
+  if (Object.keys(cart).length === 0) { alert('Please add items to your cart first!'); return; }
+  closeCart();
+  cart = {};
+  updateCartUI();
+  renderProducts(currentProducts);
+  document.getElementById('successModal').classList.remove('hidden');
+  document.getElementById('successModal').classList.add('flex');
+}
+
+function detectGPSLocation() {
+  const btn = document.getElementById('locationText');
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  btn.textContent = 'Detecting GPS...';
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        if (res.ok) {
+          const data = await res.json();
+          const road = data.address?.road || data.address?.suburb || 'Sector 62';
+          const city = data.address?.city || data.address?.town || 'Noida';
+          btn.textContent = `${road}, ${city}`;
+        } else {
+          btn.textContent = `GPS: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+        }
+      } catch (e) {
+        btn.textContent = `GPS: ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+      }
+    },
+    (err) => {
+      alert('Location permission denied or unavailable.');
+      btn.textContent = 'Sector 62, Noida';
+    }
+  );
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+renderProducts(ALL_PRODUCTS);
+updateCartUI();
+</script>
+</body>
+</html>

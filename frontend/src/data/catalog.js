@@ -1,0 +1,86 @@
+export const defaultCategories = [
+  { id: 1, name: 'Milk & Dairy', slug: 'milk-dairy', icon: '🥛' },
+  { id: 2, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', icon: '🍎' },
+  { id: 3, name: 'Snacks & Munchies', slug: 'snacks-munchies', icon: '🍿' },
+  { id: 4, name: 'Cold Drinks & Juices', slug: 'cold-drinks-juices', icon: '🥤' },
+  { id: 5, name: 'Instant & Frozen Food', slug: 'instant-food', icon: '🍜' },
+  { id: 6, name: 'Atta, Rice & Dal', slug: 'atta-rice-dal', icon: '🌾' },
+  { id: 7, name: 'Oil, Ghee & Spices', slug: 'oil-ghee-spices', icon: '🧈' },
+  { id: 8, name: 'Bakery & Biscuits', slug: 'bakery-biscuits', icon: '🍞' },
+  { id: 9, name: 'Personal Care', slug: 'personal-care', icon: '🧼' },
+  { id: 10, name: 'Household Essentials', slug: 'household-essentials', icon: '🧹' },
+  { id: 11, name: 'Baby Care', slug: 'baby-care', icon: '🍼' },
+  { id: 12, name: 'Pet Care', slug: 'pet-care', icon: '🐶' }
+];
+
+export const defaultProducts = [
+  // 1. Milk & Dairy
+  { id: 1, category_id: 1, name: 'Amul Taaza Toned Milk', weight_unit: '500 ml', price: 28, discount_price: 27, rating: 4.9, stock: 85, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=350&q=80', description: 'Fresh pasteurized toned milk with 3.0% fat content.' },
+  { id: 2, category_id: 1, name: 'Mother Dairy Full Cream Milk', weight_unit: '500 ml', price: 34, discount_price: 33, rating: 4.8, stock: 60, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=350&q=80', description: 'Rich creamy milk ideal for tea, coffee, and homemade desserts.' },
+  { id: 3, category_id: 1, name: 'Fresh Malai Paneer Block', weight_unit: '200 g', price: 95, discount_price: 89, rating: 4.9, stock: 45, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=350&q=80', description: 'Soft and succulent fresh paneer block made from 100% cow milk.' },
+  { id: 4, category_id: 1, name: 'Amul Salted Butter', weight_unit: '100 g', price: 60, discount_price: 58, rating: 4.9, stock: 70, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?w=350&q=80', description: 'The original Taste of India salted butter for toast and cooking.' },
+  { id: 5, category_id: 1, name: 'Farm Fresh White Eggs', weight_unit: '6 pcs Pack', price: 55, discount_price: 49, rating: 4.8, stock: 90, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=350&q=80', description: 'Farm fresh washed and sanitized protein-rich eggs.' },
+  { id: 6, category_id: 1, name: 'Mother Dairy Classic Dahi', weight_unit: '400 g', price: 45, discount_price: 40, rating: 4.7, stock: 50, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1571217698542-a9b0a1a0f8ab?w=350&q=80', description: 'Thick and creamy traditional curd made from pasteurized toned milk.' },
+
+  // 2. Fruits & Vegetables
+  { id: 7, category_id: 2, name: 'Fresh Hybrid Red Tomatoes', weight_unit: '1 kg', price: 35, discount_price: 28, rating: 4.7, stock: 65, in_stock: true, eta_badge: '10 Mins', image_url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=350&q=80', description: 'Firm juicy tomatoes sourced fresh every morning from local mandis.' },
+  { id: 8, category_id: 2, name: 'Robusta Sweet Bananas (Keela)', weight_unit: '1 kg (6-7 pcs)', price: 60, discount_price: 48, rating: 4.9, stock: 50, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=350&q=80', description: 'Naturally ripened sweet bananas packed with energy and potassium.' },
+  { id: 9, category_id: 2, name: 'Fresh Red Onions (Pyaaz)', weight_unit: '1 kg', price: 40, discount_price: 32, rating: 4.8, stock: 120, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cf?w=350&q=80', description: 'Crisp and pungent red onions essential for everyday Indian cooking.' },
+  { id: 10, category_id: 2, name: 'Farm Fresh Potatoes (Aloo)', weight_unit: '1 kg', price: 30, discount_price: 24, rating: 4.7, stock: 150, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=350&q=80', description: 'Clean, unblemished all-purpose potatoes perfect for curries and fries.' },
+  { id: 11, category_id: 2, name: 'Shimla Royal Delicious Apples', weight_unit: '500 g (3-4 pcs)', price: 140, discount_price: 119, rating: 4.9, stock: 40, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=350&q=80', description: 'Crisp sweet apples freshly harvested from Himachal orchards.' },
+  { id: 12, category_id: 2, name: 'Organic Green Capsicum', weight_unit: '250 g', price: 28, discount_price: 22, rating: 4.8, stock: 35, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=350&q=80', description: 'Crunchy bell peppers rich in Vitamin C.' },
+
+  // 3. Snacks & Munchies
+  { id: 13, category_id: 3, name: "Lays India's Magic Masala", weight_unit: '50 g', price: 20, discount_price: 18, rating: 4.9, stock: 200, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=350&q=80', description: 'Crispy potato chips with authentic spicy Indian masala flavor.' },
+  { id: 14, category_id: 3, name: 'Kurkure Masala Munch', weight_unit: '85 g', price: 20, discount_price: 19, rating: 4.8, stock: 150, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281292?w=350&q=80', description: 'Tedha par mera hai! Crispy crunchy spiced corn puffs.' },
+  { id: 15, category_id: 3, name: "Haldiram's Aloo Bhujia", weight_unit: '200 g', price: 65, discount_price: 55, rating: 4.9, stock: 80, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=350&q=80', description: 'Crispy spicy potato sev blended with mint and chili seasonings.' },
+  { id: 16, category_id: 3, name: 'Cadbury Dairy Milk Silk', weight_unit: '60 g', price: 80, discount_price: 75, rating: 4.9, stock: 60, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=350&q=80', description: 'Smoother, creamier, and silkier melt-in-mouth milk chocolate.' },
+  { id: 17, category_id: 3, name: 'Act II Butter Lovers Popcorn', weight_unit: '85 g', price: 35, discount_price: 30, rating: 4.7, stock: 45, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1585647347483-22b66260dfff?w=350&q=80', description: 'Instant microwaveable popcorn loaded with movie-theatre butter.' },
+
+  // 4. Cold Drinks & Juices
+  { id: 18, category_id: 4, name: 'Coca-Cola Soft Drink Can', weight_unit: '300 ml', price: 40, discount_price: 35, rating: 4.9, stock: 120, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=350&q=80', description: 'The refreshing taste of chilled Coca-Cola in an aluminum can.' },
+  { id: 19, category_id: 4, name: 'Sprite Clear Lemon-Lime Can', weight_unit: '300 ml', price: 40, discount_price: 35, rating: 4.8, stock: 100, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=350&q=80', description: 'Crisp and refreshing lemon-lime flavored carbonated beverage.' },
+  { id: 20, category_id: 4, name: 'Frooti Real Mango Drink', weight_unit: '1.2 L', price: 70, discount_price: 60, rating: 4.7, stock: 75, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1546883498-48b4b1a45749?w=350&q=80', description: 'Made with rich totapuri mango pulp for a burst of mango goodness.' },
+  { id: 21, category_id: 4, name: 'Red Bull Energy Drink', weight_unit: '250 ml', price: 125, discount_price: 115, rating: 4.8, stock: 50, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=350&q=80', description: 'Vitalizes body and mind with high-grade caffeine and B-group vitamins.' },
+
+  // 5. Instant & Frozen Food
+  { id: 22, category_id: 5, name: 'Maggi 2-Minute Masala Noodles', weight_unit: '280 g (4-Pack)', price: 58, discount_price: 52, rating: 4.9, stock: 140, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=350&q=80', description: "India's most beloved 2-minute instant noodles with tastemaker seasoning." },
+  { id: 23, category_id: 5, name: 'Yippee Magic Masala Noodles', weight_unit: '240 g (4-Pack)', price: 55, discount_price: 48, rating: 4.7, stock: 80, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=350&q=80', description: 'Non-sticky round instant noodles with a blend of five spices.' },
+  { id: 24, category_id: 5, name: 'McCain French Fries Crispy', weight_unit: '420 g', price: 130, discount_price: 110, rating: 4.8, stock: 40, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=350&q=80', description: 'Ready to fry crunchy golden potato french fries.' },
+
+  // 6. Atta, Rice & Dal
+  { id: 25, category_id: 6, name: 'Aashirvaad Shuddh Chakki Atta', weight_unit: '5 kg', price: 245, discount_price: 219, rating: 4.9, stock: 65, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=350&q=80', description: '100% whole wheat flour ground using traditional stone chakki.' },
+  { id: 26, category_id: 6, name: 'India Gate Feast Rozzana Basmati', weight_unit: '5 kg', price: 450, discount_price: 389, rating: 4.9, stock: 45, in_stock: true, eta_badge: '10 Mins', image_url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=350&q=80', description: 'Aromatic aged long grain basmati rice ideal for biryani and pulao.' },
+  { id: 27, category_id: 6, name: 'Tata Sampann Unpolished Toor Dal', weight_unit: '1 kg', price: 155, discount_price: 135, rating: 4.8, stock: 70, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1585996956272-3c1c9c45a6c3?w=350&q=80', description: 'Nutritious unpolished yellow arhar dal rich in dietary fiber.' },
+  { id: 28, category_id: 6, name: 'Tata Sampann Moong Dal Split', weight_unit: '1 kg', price: 140, discount_price: 122, rating: 4.8, stock: 55, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1585996956272-3c1c9c45a6c3?w=350&q=80', description: 'Easily digestible protein-packed green split moong dal.' },
+
+  // 7. Oil, Ghee & Spices
+  { id: 29, category_id: 7, name: 'Amul Pure Cow Desi Ghee', weight_unit: '1 L Tin', price: 630, discount_price: 589, rating: 4.9, stock: 35, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=350&q=80', description: 'Golden granular desi cow ghee with an irresistible traditional aroma.' },
+  { id: 30, category_id: 7, name: 'Fortune Sunlite Refined Oil', weight_unit: '1 L Pouch', price: 145, discount_price: 129, rating: 4.8, stock: 90, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=350&q=80', description: 'Light and healthy refined sunflower cooking oil with Vitamin A & D.' },
+  { id: 31, category_id: 7, name: 'Fortune Kachi Ghani Mustard Oil', weight_unit: '1 L Bottle', price: 160, discount_price: 145, rating: 4.9, stock: 80, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=350&q=80', description: 'Cold-pressed authentic pungent mustard oil for pickles and curries.' },
+  { id: 32, category_id: 7, name: 'Everest Kashmiri Lal Mirch Powder', weight_unit: '100 g', price: 85, discount_price: 78, rating: 4.8, stock: 110, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=350&q=80', description: 'Imparts a brilliant natural red hue and mild warmth to dishes.' },
+  { id: 33, category_id: 7, name: 'Tata Salt Vacuum Evaporated', weight_unit: '1 kg', price: 28, discount_price: 26, rating: 4.9, stock: 250, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=350&q=80', description: 'Desh ka Namak with required iodine and zero impurities.' },
+
+  // 8. Bakery & Biscuits
+  { id: 34, category_id: 8, name: 'Britannia 100% Whole Wheat Bread', weight_unit: '400 g', price: 50, discount_price: 45, rating: 4.8, stock: 75, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=350&q=80', description: 'Soft brown loaf enriched with 100% whole wheat fiber.' },
+  { id: 35, category_id: 8, name: 'Parle-G Original Glucose Biscuits', weight_unit: '250 g', price: 25, discount_price: 22, rating: 4.9, stock: 180, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=350&q=80', description: "World's favorite tea-time glucose biscuits with milky goodness." },
+  { id: 36, category_id: 8, name: 'Oreo Vanilla Creme Cookie', weight_unit: '120 g', price: 35, discount_price: 30, rating: 4.8, stock: 95, in_stock: true, eta_badge: '7 Mins', image_url: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=350&q=80', description: 'Twist, lick, and dunk chocolate sandwich cookies.' },
+
+  // 9. Personal Care
+  { id: 37, category_id: 9, name: 'Dettol Original Bathing Soap Bar', weight_unit: '125 g (Pack of 3)', price: 145, discount_price: 129, rating: 4.9, stock: 65, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=350&q=80', description: 'Trusted 99.9% germ protection soap with signature pine fragrance.' },
+  { id: 38, category_id: 9, name: 'Colgate Strong Teeth Toothpaste', weight_unit: '200 g (Saver Pack)', price: 120, discount_price: 105, rating: 4.8, stock: 90, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1559591937-e1032a67e45b?w=350&q=80', description: 'With Amino Shakti formula to add natural calcium into enamel.' },
+  { id: 39, category_id: 9, name: 'Head & Shoulders Cool Menthol', weight_unit: '340 ml', price: 320, discount_price: 279, rating: 4.8, stock: 40, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=350&q=80', description: 'Clinically proven anti-dandruff shampoo with refreshing cooling menthol.' },
+
+  // 10. Household Essentials
+  { id: 40, category_id: 10, name: 'Surf Excel Easy Wash Detergent', weight_unit: '1 kg', price: 140, discount_price: 125, rating: 4.9, stock: 85, in_stock: true, eta_badge: '9 Mins', image_url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=350&q=80', description: 'Superior stain removal powder that works like brush in machine and bucket.' },
+  { id: 41, category_id: 10, name: 'Vim Dishwash Gel Lemon Scent', weight_unit: '750 ml Bottle', price: 155, discount_price: 135, rating: 4.9, stock: 70, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1585830812416-a6c86bb14576?w=350&q=80', description: 'Power of 100 lemons to cut through tough oily grease in 1 swipe.' },
+  { id: 42, category_id: 10, name: 'Harpic Power Plus Toilet Cleaner', weight_unit: '1 L', price: 199, discount_price: 175, rating: 4.9, stock: 60, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1585830812416-a6c86bb14576?w=350&q=80', description: 'Kills 99.9% germs and eliminates tough yellow scale stains.' },
+
+  // 11. Baby Care
+  { id: 43, category_id: 11, name: 'Pampers All Round Baby Pants (M)', weight_unit: '30 Diapers', price: 449, discount_price: 389, rating: 4.9, stock: 35, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=350&q=80', description: 'Magic gel core with up to 12 hours dryness and anti-rash lotion.' },
+  { id: 44, category_id: 11, name: "Johnson's Baby Gentle Shampoo", weight_unit: '200 ml', price: 190, discount_price: 165, rating: 4.8, stock: 45, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=350&q=80', description: 'No more tears formula as gentle to baby eyes as pure water.' },
+
+  // 12. Pet Care
+  { id: 45, category_id: 12, name: 'Pedigree Adult Dog Food Chicken', weight_unit: '1.2 kg', price: 340, discount_price: 299, rating: 4.8, stock: 30, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=350&q=80', description: 'Complete balanced dry nutrition for adult dogs with real meat.' },
+  { id: 46, category_id: 12, name: 'Whiskas Adult Cat Food Ocean Fish', weight_unit: '1.1 kg', price: 370, discount_price: 325, rating: 4.8, stock: 25, in_stock: true, eta_badge: '8 Mins', image_url: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=350&q=80', description: 'Tempting pockets filled with delicious ocean fish flavor for cats.' }
+];
