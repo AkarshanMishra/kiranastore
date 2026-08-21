@@ -8,7 +8,9 @@ services:
     runtime: python
     plan: free
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    # Build the Admin dashboard first (admin/dist), then install Python deps.
+    # Running from rootDir=backend, so ../admin points at the admin app.
+    buildCommand: cd ../admin && npm install && npm run build && cd ../backend && pip install -r requirements.txt
     startCommand: python main.py
     healthCheckPath: /
     envVars:
