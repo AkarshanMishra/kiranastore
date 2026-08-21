@@ -42,5 +42,15 @@ def read_root():
         "docs": "/docs"
     }
 
-# Reload trigger for customers routes
+
+# Enables running directly with:  python main.py
+# Reads the PORT from the environment (Render sets PORT; defaults to 8000 locally).
+# This avoids the uvicorn "--port requires an argument" error caused by a missing
+# port value in a Start Command like:  uvicorn main:app --host 0.0.0.0 --port
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
+
 
