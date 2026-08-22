@@ -133,7 +133,7 @@ export default function ProductGrid({
             {shelf.products.map((product) => (
               <div
                 key={product.id}
-                className="min-w-[130px] max-w-[142px] sm:min-w-[170px] sm:max-w-[185px] flex-shrink-0 snap-start flex flex-col"
+                className="min-w-[150px] max-w-[165px] sm:min-w-[190px] sm:max-w-[205px] flex-shrink-0 snap-start flex flex-col"
               >
                 <ProductCard
                   product={product}
