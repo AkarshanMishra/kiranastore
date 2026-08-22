@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import Order, Product, OrderItem, Customer
+from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage
 from schemas import (
     OrderSchema,
     OrderStatusUpdateSchema,
@@ -12,7 +12,12 @@ from schemas import (
     ProductCreateUpdateSchema,
     CustomerSchema,
     CustomerCreateSchema,
-    CustomerUpdateSchema
+    CustomerUpdateSchema,
+    SupportTicketSchema,
+    NotificationCreateSchema,
+    NotificationSchema,
+    ChatMessageCreateSchema,
+    ChatMessageSchema
 )
 from routers.websocket import manager
 
@@ -221,9 +226,6 @@ def update_product_stock(
     db.commit()
     db.refresh(product)
     return product
-
-from models import SupportTicket, Notification, ChatMessage
-from schemas import SupportTicketSchema, NotificationCreateSchema, NotificationSchema, ChatMessageCreateSchema, ChatMessageSchema
 
 @router.get("/support/tickets", response_model=List[SupportTicketSchema])
 def get_all_support_tickets(db: Session = Depends(get_db)):

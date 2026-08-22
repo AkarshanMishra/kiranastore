@@ -5,8 +5,20 @@ import random
 import string
 import asyncio
 from database import get_db
-from models import Order, OrderItem, Product, Customer
-from schemas import OrderCreateSchema, OrderSchema
+from models import Order, OrderItem, Product, Customer, SupportTicket, Notification, ChatMessage
+from schemas import (
+    OrderCreateSchema,
+    OrderSchema,
+    OrderRateSchema,
+    CustomerCreateSchema,
+    CustomerSchema,
+    SupportTicketCreateSchema,
+    SupportTicketSchema,
+    NotificationCreateSchema,
+    NotificationSchema,
+    ChatMessageCreateSchema,
+    ChatMessageSchema
+)
 from routers.websocket import manager
 
 router = APIRouter(prefix="/api", tags=["orders"])
@@ -188,9 +200,6 @@ def register_or_sync_customer(payload: CustomerCreateSchema, db: Session = Depen
     db.refresh(new_cust)
     return new_cust
 
-from models import Order, OrderItem, Product, Customer, SupportTicket
-from schemas import OrderCreateSchema, OrderSchema, CustomerCreateSchema, CustomerSchema, SupportTicketCreateSchema, SupportTicketSchema
-
 @router.get("/orders", response_model=List[OrderSchema])
 def list_orders(phone: Optional[str] = None, db: Session = Depends(get_db)):
     if not phone:
@@ -279,9 +288,6 @@ async def create_support_ticket(payload: SupportTicketCreateSchema, db: Session 
     db.commit()
     db.refresh(ticket)
     return ticket
-
-from models import ChatMessage
-from schemas import ChatMessageCreateSchema, ChatMessageSchema
 
 @router.get("/support/chat", response_model=List[ChatMessageSchema])
 def get_chat_messages(phone: Optional[str] = None, ticket_id: Optional[str] = None, db: Session = Depends(get_db)):
