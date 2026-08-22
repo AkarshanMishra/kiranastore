@@ -56,6 +56,31 @@ export default function ProductDetailModal({
     setTimeout(() => setReviewNotice(null), 3000);
   };
 
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const minSwipeDistance = 40;
+    if (distance > minSwipeDistance) {
+      // Swiped Left -> Next Image
+      setSelectedImgIdx((prev) => (prev + 1) % galleryImages.length);
+    } else if (distance < -minSwipeDistance) {
+      // Swiped Right -> Prev Image
+      setSelectedImgIdx((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+    }
+  };
+
   return (
     <div 
       className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 overscroll-contain"
@@ -83,31 +108,41 @@ export default function ProductDetailModal({
           </button>
         </div>
 
-        {/* Product Image Viewer */}
-        <div className="bg-gray-50 dark:bg-slate-950 p-6 flex flex-col items-center justify-center relative">
-          <div className="h-44 flex items-center justify-center">
+        {/* Product Image Viewer with Touch Swipe Support */}
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="bg-gray-50 dark:bg-slate-950 p-6 flex flex-col items-center justify-center relative select-none cursor-grab active:cursor-grabbing"
+        >
+          <div className="h-44 flex items-center justify-center relative w-full">
             <img
               src={galleryImages[selectedImgIdx] || product.image_url}
               alt={product.name}
-              className="h-full object-contain"
+              className="h-full object-contain pointer-events-none transition-all duration-300 transform scale-100"
             />
           </div>
 
-          {/* Alternate Thumbnail Dots */}
-          <div className="flex gap-2 mt-3">
+          {/* Alternate Thumbnail Dots / Swipe Indicators */}
+          <div className="flex items-center gap-2 mt-3 z-10">
             {galleryImages.map((img, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedImgIdx(idx)}
-                className={`w-3 h-3 rounded-full border transition ${
-                  selectedImgIdx === idx ? 'bg-purple-600 border-purple-600 scale-110' : 'bg-gray-200 border-gray-300'
+                className={`transition-all ${
+                  selectedImgIdx === idx
+                    ? 'w-6 h-2 rounded-full bg-emerald-600'
+                    : 'w-2 h-2 rounded-full bg-gray-300 dark:bg-slate-700 hover:bg-gray-400'
                 }`}
+                title={`Image ${idx + 1}`}
               />
             ))}
           </div>
 
-          <span className="absolute bottom-3 left-4 bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1">
-            <Store size={12} /> Direct From Local Kirana Store
+          <span className="text-[10px] text-gray-400 font-bold mt-1">👈 Swipe to view images 👉</span>
+
+          <span className="absolute bottom-3 left-4 bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <Store size={11} /> Fresh from Kirana
           </span>
         </div>
 

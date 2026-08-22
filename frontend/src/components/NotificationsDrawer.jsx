@@ -7,9 +7,9 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
     {
       id: 1,
       type: 'ORDERS',
-      title: "🚚 Order Scheduled for Delivery!",
-      desc: "Your order #KS-94821 has been accepted by the local storekeeper. Scheduled delivery: Today (4:00 PM - 7:00 PM).",
-      time: "Just now",
+      title: "Order #KS-94821 Dispatched",
+      desc: "Rider Rahul is on the way. Expected ETA: 7 mins.",
+      time: "2m ago",
       icon: Truck,
       unread: true,
       color: "text-blue-500 bg-blue-50 dark:bg-blue-950"
@@ -17,9 +17,9 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
     {
       id: 2,
       type: 'OFFERS',
-      title: "🔥 Flash Price Drop Active!",
-      desc: "Amul Pure Cow Ghee (1L) price dropped by ₹41! Limited stock available for today.",
-      time: "20 mins ago",
+      title: "Amul Cow Ghee 20% Off",
+      desc: "Flash deal live for your local area. ₹380 only.",
+      time: "15m ago",
       icon: Tag,
       unread: true,
       color: "text-amber-500 bg-amber-50 dark:bg-amber-950"
@@ -27,9 +27,9 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
     {
       id: 3,
       type: 'WALLET',
-      title: "💰 ₹25 Reward Cashback Credited!",
-      desc: "Scratch card cashback credited directly to your KiranaMoney wallet balance.",
-      time: "1 hour ago",
+      title: "₹25 Cashback Credited",
+      desc: "Directly added to KiranaMoney wallet balance.",
+      time: "1h ago",
       icon: Wallet,
       unread: false,
       color: "text-purple-500 bg-purple-50 dark:bg-purple-950"
@@ -37,8 +37,8 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
     {
       id: 4,
       type: 'ORDERS',
-      title: "⏰ Daily Milk Subscription Confirmed",
-      desc: "Your daily morning Amul Taaza Milk (500ml) pack is scheduled for 6:30 AM dispatch.",
+      title: "Morning Milk Scheduled",
+      desc: "Amul Taaza 500ml booked for 6:30 AM dispatch.",
       time: "Yesterday",
       icon: Sparkles,
       unread: false,

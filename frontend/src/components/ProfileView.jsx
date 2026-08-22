@@ -43,7 +43,8 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { getApiBaseUrl, setApiBaseUrl, testBackendConnection } from '../apiClient';
+import { getApiBaseUrl, setApiBaseUrl } from '../apiClient';
+import RazorpayModal from './RazorpayModal';
 
 export default function ProfileView({
   user,
@@ -191,13 +192,11 @@ export default function ProfileView({
   const handleAddNewUpi = (e) => {
     e.preventDefault();
     if (!newUpiInput.trim() || !newUpiInput.includes('@')) {
-      alert("Please enter a valid UPI ID (e.g. yourname@oksbi or mobile@paytm)");
       return;
     }
     setSavedUpis(prev => [...prev, newUpiInput.trim()]);
     setNewUpiInput('');
     setIsAddingUpi(false);
-    alert("UPI ID verified and added to your saved payment methods! ✓");
   };
 
   const handleDeleteUpi = (vpaToDelete) => {
@@ -208,7 +207,6 @@ export default function ProfileView({
     e.preventDefault();
     const cleanNum = newCardNumber.replace(/\s/g, '');
     if (cleanNum.length < 15) {
-      alert("Please enter a valid 16-digit Card Number");
       return;
     }
     const last4 = cleanNum.slice(-4);
@@ -224,7 +222,6 @@ export default function ProfileView({
     setNewCardHolder('');
     setNewCardExpiry('');
     setIsAddingCard(false);
-    alert("Debit / Credit card securely saved via RBI tokenization! ✓");
   };
 
   const handleDeleteCard = (cardId) => {
@@ -257,17 +254,27 @@ export default function ProfileView({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  // Recharge Payment Modal State
+  const [isRechargePaymentOpen, setIsRechargePaymentOpen] = useState(false);
+  const [rechargeAmount, setRechargeAmount] = useState(500);
+
   const handleAddWalletMoney = (amt) => {
     const parsed = parseFloat(amt);
     if (!isNaN(parsed) && parsed > 0) {
-      setWalletBalance(prev => prev + parsed);
-      setWalletTransactions(prev => [
-        { id: Date.now(), type: 'CREDIT', title: 'Wallet Top-up via Instant UPI', amount: parsed, date: 'Just now' },
-        ...prev
-      ]);
-      setAddAmountInput('');
-      alert(`₹${parsed} successfully added to KiranaMoney!`);
+      setRechargeAmount(parsed);
+      setIsRechargePaymentOpen(true);
     }
+  };
+
+  const handleRechargeSuccess = (paymentData) => {
+    const payId = paymentData?.razorpay_payment_id || 'UPI-Direct';
+    setWalletBalance(prev => prev + rechargeAmount);
+    setWalletTransactions(prev => [
+      { id: Date.now(), type: 'CREDIT', title: `Wallet Top-up (${payId.slice(-6)})`, amount: rechargeAmount, date: 'Just now' },
+      ...prev
+    ]);
+    setAddAmountInput('');
+    setIsRechargePaymentOpen(false);
   };
 
   const handleClaimVoucher = (e) => {
@@ -314,7 +321,6 @@ export default function ProfileView({
       setAddresses(prev => [...prev, newEntry]);
       if (setUserAddress) setUserAddress(newAddrText.trim());
       setNewAddrText('');
-      alert('Address added to your Address Book!');
     }
   };
 
@@ -335,7 +341,6 @@ export default function ProfileView({
       status: 'VERIFIED'
     };
     setPrescriptions(prev => [newRx, ...prev]);
-    alert("Prescription uploaded & verified! Pharmacy store items unlocked. 🩺");
   };
 
   const handleCreateNewList = (e) => {
@@ -359,7 +364,6 @@ export default function ProfileView({
     setNewListDesc('');
     setNewListEstimatedCost('500');
     setIsCreatingList(false);
-    alert(`Shopping List "${newList.name}" created successfully! ✓`);
   };
 
   const handleDeleteList = (idToDelete) => {
@@ -394,25 +398,19 @@ export default function ProfileView({
   const handleChangePassword = (e) => {
     e.preventDefault();
     if (newPassword.length < 6) {
-      alert("New password must be at least 6 characters");
       return;
     }
     setOldPassword('');
     setNewPassword('');
-    alert("Password changed successfully! 🔒");
   };
 
   const handleDeleteAccount = () => {
-    if (confirm("Are you sure you want to request account deletion? All personal data, wallet credits and order receipts will be deleted permanently.")) {
-      alert("Your account deletion request has been scheduled in accordance with DPDP compliance. Logging you out now.");
-      if (onLogout) onLogout();
-    }
+    if (onLogout) onLogout();
   };
 
   const handleAddBookmarkToCart = (item) => {
     if (addToCart) {
       addToCart(item);
-      alert(`Added ${item.name} to cart! 🛍️`);
     }
   };
 
@@ -443,25 +441,12 @@ export default function ProfileView({
     {
       group: "SUPPORT, APP & PRIVACY",
       items: [
-        { 
-          id: 'serverConfig', 
-          label: 'Cloud Sync & Server Connection', 
-          icon: Globe, 
-          desc: serverUrlInput ? `Connected to: ${serverUrlInput}` : 'Default (Localhost / Offline Mode)', 
-          badge: serverUrlInput ? 'Cloud Active' : 'Offline / Local', 
-          highlight: true, 
-          onClick: () => {
-            setServerUrlInput(getApiBaseUrl());
-            setPingResult(null);
-            setActiveModal('serverConfig');
-          } 
-        },
         { id: 'liveNotifications', label: 'Live Notifications & Alerts', icon: Bell, desc: 'Order status, wallet cashback & flash deals', badge: '2 New', highlight: true, onClick: onOpenNotifications },
         { id: 'help', label: 'Need Help & Support', icon: HelpCircle, desc: '24/7 Customer Care & WhatsApp Assistance', onClick: onOpenSupport },
         { id: 'share', label: 'Share the App (Refer & Earn)', icon: Share2, desc: 'Earn ₹100 for every friend referred', badge: 'Get ₹100', highlight: true, onClick: () => setActiveModal('share') },
         { id: 'notifications', label: 'Notification Preferences', icon: Bell, desc: 'WhatsApp alerts, SMS & deal updates', onClick: () => setActiveModal('notifications') },
         { id: 'about', label: 'About KiranaStore', icon: Info, desc: 'Our single local store mission & FSSAI', onClick: () => setActiveModal('about') },
-        { id: 'privacy', label: 'Account Privacy & Security', icon: ShieldCheck, desc: 'Data protection, permissions & terms', onClick: () => setActiveModal('privacy') },
+        { id: 'privacy', label: 'Account Privacy & Permissions', icon: ShieldCheck, desc: 'Data protection, GPS location & security', onClick: () => setActiveModal('privacy') },
       ]
     }
   ];
@@ -1034,7 +1019,10 @@ export default function ProfileView({
                 <div className="text-2xl font-black">{rewardPoints} Points</div>
               </div>
               <button
-                onClick={() => alert(`Redeemed ${rewardPoints} points for ₹${Math.floor(rewardPoints/10)} OFF your next order!`)}
+                onClick={() => {
+                  setWalletBalance(w => w + Math.floor(rewardPoints/10));
+                  setRewardPoints(0);
+                }}
                 className="bg-white text-orange-700 font-extrabold text-xs px-3 py-1.5 rounded-xl shadow"
               >
                 Redeem ₹{Math.floor(rewardPoints/10)}
@@ -1117,7 +1105,7 @@ export default function ProfileView({
               </div>
 
               <button
-                onClick={() => { alert(`E-Gift card worth ₹${giftCardAmount} generated! Voucher code sent.`); setActiveModal(null); }}
+                onClick={() => setActiveModal(null)}
                 className="w-full bg-pink-600 hover:bg-pink-700 text-white font-extrabold text-xs py-3 rounded-xl shadow transition"
               >
                 Purchase & Send Gift Card (₹{giftCardAmount})
@@ -1312,7 +1300,7 @@ export default function ProfileView({
                     <span className="font-extrabold block">Paytm Wallet</span>
                     <span className="text-gray-400 text-[10px]">Linked to {user?.phone || '+91 9876543210'}</span>
                   </div>
-                  <button onClick={() => alert("Paytm wallet linked successfully!")} className="text-indigo-600 font-extrabold text-xs">Link</button>
+                  <button className="text-indigo-600 font-extrabold text-xs">Linked ✓</button>
                 </div>
 
                 <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 flex items-center justify-between">
@@ -1320,7 +1308,7 @@ export default function ProfileView({
                     <span className="font-extrabold block">Amazon Pay</span>
                     <span className="text-gray-400 text-[10px]">1-Click Checkout</span>
                   </div>
-                  <button onClick={() => alert("Amazon Pay linked successfully!")} className="text-indigo-600 font-extrabold text-xs">Link</button>
+                  <button className="text-indigo-600 font-extrabold text-xs">Linked ✓</button>
                 </div>
               </div>
             )}
@@ -1332,7 +1320,7 @@ export default function ProfileView({
                 {['HDFC Bank', 'State Bank of India (SBI)', 'ICICI Bank', 'Axis Bank', 'Punjab National Bank (PNB)'].map((b, i) => (
                   <div key={i} className="p-2.5 bg-gray-50 dark:bg-slate-800 rounded-xl flex items-center justify-between border border-gray-200 dark:border-slate-700">
                     <span className="font-bold">{b}</span>
-                    <button onClick={() => alert(`${b} set as default Net Banking source!`)} className="text-indigo-600 font-bold text-xs hover:underline">Select</button>
+                    <button className="text-indigo-600 font-bold text-xs hover:underline">Select</button>
                   </div>
                 ))}
               </div>
@@ -1369,10 +1357,10 @@ export default function ProfileView({
             </div>
 
             <button
-              onClick={() => alert("Opening WhatsApp to share referral link...")}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow transition flex items-center justify-center gap-2"
+              onClick={handleCopyReferral}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-3 rounded-2xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Share via WhatsApp 💬</span>
+              <span>Share Referral Link 💬</span>
             </button>
           </div>
         </div>
@@ -1505,15 +1493,13 @@ export default function ProfileView({
                 </button>
               </div>
 
-              {/* Active Sessions */}
+               {/* Active Sessions */}
               <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 flex justify-between items-center">
                 <div>
                   <span className="font-extrabold block">Active Logged-in Sessions</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">1 Active Device (Chrome on Windows)</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">1 Active Device (Verified Session)</span>
                 </div>
-                <button onClick={() => alert("All other active sessions have been signed out.")} className="text-rose-600 font-extrabold text-xs hover:underline">
-                  Revoke Others
-                </button>
+                <span className="text-emerald-600 font-bold text-xs">Secured ✓</span>
               </div>
 
               {/* Delete Account */}
@@ -1699,7 +1685,6 @@ export default function ProfileView({
                       <button
                         onClick={() => {
                           list.items?.forEach(item => addToCart(item));
-                          alert(`Added all ${list.itemCount} items from "${list.name}" to your cart! 🛍️`);
                           setActiveModal(null);
                         }}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-2 rounded-xl flex items-center justify-center gap-1.5 shadow active:scale-98 transition"
@@ -1783,169 +1768,14 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* 17. Cloud Sync & Backend Server Settings Modal */}
-      {activeModal === 'serverConfig' && (
-        <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 dark:text-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl relative animate-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-            <button 
-              onClick={() => setActiveModal(null)} 
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 bg-gray-100 dark:bg-slate-800 p-1.5 rounded-full"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-emerald-100 dark:bg-emerald-950 p-3 rounded-2xl text-brand-green">
-                <Globe size={24} />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-base sm:text-lg">Cloud Sync & Server Connection</h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400">Sync with Store PC or Cloud backend across different networks & 4G/5G</p>
-              </div>
-            </div>
-
-            {/* Current Connection Status Pill */}
-            <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between mb-4 ${
-              getApiBaseUrl()
-                ? 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
-                : 'bg-blue-50 dark:bg-blue-950/70 border-blue-300 dark:border-blue-800 text-blue-900 dark:text-blue-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Active Backend: {getApiBaseUrl() || 'Default (Localhost / Direct Proxy)'}</span>
-              </div>
-              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 shadow-xs">
-                {getApiBaseUrl() ? 'CLOUD TUNNEL' : 'LOCAL'}
-              </span>
-            </div>
-
-            {/* Input Form */}
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              setApiBaseUrl(serverUrlInput);
-              alert(serverUrlInput ? `✓ Cloud Server URL saved: ${serverUrlInput}` : '✓ Reset to Default Localhost Mode');
-              setActiveModal(null);
-            }} className="space-y-4">
-              <div>
-                <label className="block text-xs font-black text-gray-700 dark:text-slate-300 mb-1">
-                  Backend Server / Cloud Tunnel URL:
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={serverUrlInput}
-                    onChange={(e) => setServerUrlInput(e.target.value)}
-                    placeholder="e.g. https://xxxx.trycloudflare.com or http://192.168.1.15:8000"
-                    className="w-full text-xs font-mono p-3 rounded-2xl border border-gray-300 dark:border-slate-700 dark:bg-slate-800 focus:border-brand-green focus:ring-2 focus:ring-emerald-200 outline-none pr-8"
-                  />
-                  {serverUrlInput && (
-                    <button
-                      type="button"
-                      onClick={() => setServerUrlInput('')}
-                      className="absolute right-2.5 top-3 text-gray-400 hover:text-gray-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Quick Presets */}
-              <div>
-                <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400 block mb-1.5">Quick Presets:</span>
-                <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setServerUrlInput('');
-                      setPingResult(null);
-                    }}
-                    className="px-2.5 py-1 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 font-bold transition"
-                  >
-                    🔄 Reset Default (Localhost)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setServerUrlInput('http://10.73.103.44:8000');
-                      setPingResult(null);
-                    }}
-                    className="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold transition"
-                  >
-                    📶 Shop Wi-Fi IP (10.73.103.44:8000)
-                  </button>
-                </div>
-              </div>
-
-              {/* Ping Test Button & Result */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  disabled={isTestingPing}
-                  onClick={async () => {
-                    setIsTestingPing(true);
-                    setPingResult(null);
-                    const res = await testBackendConnection(serverUrlInput);
-                    setPingResult(res);
-                    setIsTestingPing(false);
-                  }}
-                  className="w-full py-2.5 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200 font-black text-xs flex items-center justify-center gap-2 transition active:scale-98 disabled:opacity-50"
-                >
-                  {isTestingPing ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin text-brand-green" />
-                      <span>Testing Server Connection...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Activity size={14} className="text-brand-green" />
-                      <span>⚡ Test Server Connection / Ping</span>
-                    </>
-                  )}
-                </button>
-
-                {pingResult && (
-                  <div className={`mt-2 p-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 ${
-                    pingResult.success
-                      ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800'
-                      : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
-                  }`}>
-                    {pingResult.success ? <CheckCircle2 size={16} className="flex-shrink-0" /> : <AlertCircle size={16} className="flex-shrink-0" />}
-                    <span>{pingResult.message}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Instructions Box */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
-                <div className="font-extrabold flex items-center gap-1">
-                  <span>💡 How to connect across different networks:</span>
-                </div>
-                <p>1. On your PC, double-click <strong>START_ONLINE_TUNNEL.bat</strong> in the project folder.</p>
-                <p>2. Copy the public <code className="bg-amber-200/60 dark:bg-amber-900 px-1 py-0.5 rounded font-mono">https://xxxx.trycloudflare.com</code> URL it gives you.</p>
-                <p>3. Paste it in the box above, click <strong>Test Connection</strong>, then click <strong>Save & Sync</strong>.</p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-black text-xs rounded-2xl transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 bg-brand-green hover:bg-green-800 text-white font-black text-xs rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Check size={16} />
-                  <span>Save & Sync App</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* Instant Recharge Payment Gateway Modal */}
+      {isRechargePaymentOpen && (
+        <RazorpayModal
+          isOpen={isRechargePaymentOpen}
+          amount={rechargeAmount}
+          onClose={() => setIsRechargePaymentOpen(false)}
+          onPaymentSuccess={handleRechargeSuccess}
+        />
       )}
 
     </div>

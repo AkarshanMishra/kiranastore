@@ -221,3 +221,21 @@ def update_product_stock(
     db.commit()
     db.refresh(product)
     return product
+
+from models import SupportTicket
+from schemas import SupportTicketSchema
+
+@router.get("/support/tickets", response_model=List[SupportTicketSchema])
+def get_all_support_tickets(db: Session = Depends(get_db)):
+    return db.query(SupportTicket).order_by(SupportTicket.created_at.desc()).all()
+
+@router.patch("/support/tickets/{ticket_id}")
+def update_support_ticket(ticket_id: str, payload: dict, db: Session = Depends(get_db)):
+    ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if "status" in payload:
+        ticket.status = payload["status"]
+    db.commit()
+    db.refresh(ticket)
+    return ticket

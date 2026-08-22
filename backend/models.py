@@ -88,3 +88,18 @@ class Customer(Base):
     total_spent = Column(Float, default=0.0)
     status = Column(String, default="ACTIVE") # ACTIVE, BLOCKED
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(String, unique=True, index=True) # e.g. "TICK-402"
+    customer_name = Column(String, nullable=False)
+    phone = Column(String, nullable=False)
+    order_number = Column(String, nullable=True)
+    category = Column(String, default="General Inquiry")
+    subject = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    status = Column(String, default="OPEN") # OPEN, IN_PROGRESS, RESOLVED
+    priority = Column(String, default="HIGH") # NORMAL, HIGH, URGENT
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

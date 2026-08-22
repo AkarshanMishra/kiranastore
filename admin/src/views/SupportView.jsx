@@ -1,68 +1,104 @@
-import React, { useState } from 'react';
-import { HelpCircle, MessageSquare, Phone, CheckCircle2, Clock, AlertCircle, Send, X, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { HelpCircle, MessageSquare, Phone, CheckCircle2, Clock, AlertCircle, Send, X, User, RefreshCw } from 'lucide-react';
 
 export default function SupportView() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [tickets, setTickets] = useState([
+  const defaultMockTickets = [
     {
       id: 'TICK-401',
+      ticket_id: 'TICK-401',
       customer: 'Priya Sharma',
+      customer_name: 'Priya Sharma',
       phone: '+91 9811223344',
       orderNumber: 'KS-94820',
+      order_number: 'KS-94820',
       category: 'Delivery Slot Change',
       subject: 'Please change delivery slot from 4 PM to 6 PM',
+      message: 'Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?',
       messages: [
         { sender: 'customer', text: 'Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?', time: '2:15 PM' },
-        { sender: 'support', text: 'Hello Priya, we have updated your delivery slot to 6:00 PM - 8:00 PM today. Delivery partner Rahul has been notified.', time: '2:18 PM' }
+        { sender: 'support', text: 'Hello Priya, we have updated your delivery slot to 6:00 PM - 8:00 PM today.', time: '2:18 PM' }
       ],
       status: 'RESOLVED',
       priority: 'HIGH',
       date: 'Today, 2:15 PM'
-    },
-    {
-      id: 'TICK-402',
-      customer: 'Akarshan Mishra',
-      phone: '+91 9876543210',
-      orderNumber: 'KS-94821',
-      category: 'Missing Item Inquiry',
-      subject: 'Add extra curd packet if possible',
-      messages: [
-        { sender: 'customer', text: 'Can I add 1 pack of Amul Masti Dahi to order #KS-94821 before dispatch?', time: '3:05 PM' }
-      ],
-      status: 'OPEN',
-      priority: 'NORMAL',
-      date: 'Today, 3:05 PM'
-    },
-    {
-      id: 'TICK-403',
-      customer: 'Vikram Mehta',
-      phone: '+91 9822334455',
-      orderNumber: 'KS-94819',
-      category: 'Payment Issue',
-      subject: 'Double debit via UPI on Razorpay',
-      messages: [
-        { sender: 'customer', text: 'Amount deducted twice on UPI. Refund the duplicate transaction.', time: 'Yesterday' }
-      ],
-      status: 'IN_PROGRESS',
-      priority: 'URGENT',
-      date: 'Yesterday'
     }
-  ]);
+  ];
 
-  const handleSendReply = (e) => {
+  const [tickets, setTickets] = useState(defaultMockTickets);
+
+  const loadTickets = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/admin/support/tickets');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = data.map(t => ({
+            id: t.ticket_id || `TICK-${t.id}`,
+            ticket_id: t.ticket_id || `TICK-${t.id}`,
+            customer: t.customer_name,
+            customer_name: t.customer_name,
+            phone: t.phone,
+            orderNumber: t.order_number || 'General',
+            order_number: t.order_number,
+            category: t.category,
+            subject: t.subject,
+            message: t.message,
+            messages: [
+              { sender: 'customer', text: t.message, time: new Date(t.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+            ],
+            status: t.status || 'OPEN',
+            priority: t.priority || 'HIGH',
+            date: new Date(t.created_at || Date.now()).toLocaleDateString()
+          }));
+          setTickets(formatted);
+          if (!selectedTicket && formatted.length > 0) {
+            setSelectedTicket(formatted[0]);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch support tickets:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  const handleUpdateStatus = async (ticketId, newStatus) => {
+    try {
+      await fetch(`/api/admin/support/tickets/${ticketId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch {}
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket(prev => ({ ...prev, status: newStatus }));
+    }
+  };
+
+  const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim() || !selectedTicket) return;
-    selectedTicket.messages.push({
+    const newMsg = {
       sender: 'support',
       text: replyText.trim(),
       time: 'Just now'
-    });
-    selectedTicket.status = 'RESOLVED';
+    };
+    const updatedMessages = [...(selectedTicket.messages || []), newMsg];
+    selectedTicket.messages = updatedMessages;
     setReplyText('');
-    alert('Reply sent to customer via WhatsApp and In-App Chat!');
+    handleUpdateStatus(selectedTicket.id, 'RESOLVED');
   };
 
   const filteredTickets = tickets.filter(t =>

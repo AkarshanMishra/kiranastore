@@ -1,4 +1,5 @@
-// Centralized API Base URL & Fetch Client for Local, LAN and Public Cloud Tunnels
+// Centralized API Base URL & Fetch Client configured with permanent 24/7 Render Cloud Server
+export const DEFAULT_CLOUD_BACKEND = 'https://kiranastore-imwk.onrender.com';
 
 export const getApiBaseUrl = () => {
   try {
@@ -7,7 +8,7 @@ export const getApiBaseUrl = () => {
       return saved.trim().replace(/\/+$/, '');
     }
   } catch {}
-  return '';
+  return DEFAULT_CLOUD_BACKEND;
 };
 
 export const setApiBaseUrl = (url) => {

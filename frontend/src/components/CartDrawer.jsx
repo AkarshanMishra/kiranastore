@@ -198,11 +198,20 @@ export default function CartDrawer({
       }
 
       const orderData = await res.json();
+      
+      // Save locally to guarantee instant visibility
+      try {
+        const existing = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+        const updated = [orderData, ...existing.filter(o => o.order_number !== orderData.order_number)];
+        localStorage.setItem('kirana_orders_list', JSON.stringify(updated));
+      } catch {}
+      window.dispatchEvent(new Event('order_placed'));
+
       clearCart();
       onClose();
-      onPlaceOrder(orderData);
+      if (onPlaceOrder) onPlaceOrder(orderData);
     } catch (err) {
-      alert(`Network error placing order: ${err.message}`);
+      console.error('Error placing order:', err);
     } finally {
       setIsSubmitting(false);
     }

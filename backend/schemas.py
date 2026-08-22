@@ -157,3 +157,27 @@ class CustomerSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SupportTicketCreateSchema(BaseModel):
+    customer_name: str
+    phone: str
+    order_number: Optional[str] = None
+    category: Optional[str] = "General Inquiry"
+    subject: str
+    message: str
+
+class SupportTicketSchema(BaseModel):
+    id: int
+    ticket_id: str
+    customer_name: str
+    phone: str
+    order_number: Optional[str] = None
+    category: str
+    subject: str
+    message: str
+    status: str
+    priority: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

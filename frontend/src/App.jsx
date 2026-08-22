@@ -387,6 +387,9 @@ export default function App() {
         setDarkMode={setDarkMode}
         language={language}
         setLanguage={setLanguage}
+        products={products}
+        addToCart={addToCart}
+        onSelectProduct={setSelectedProduct}
       />
 
       {/* Main Content Area */}

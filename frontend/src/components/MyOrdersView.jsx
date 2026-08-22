@@ -54,6 +54,11 @@ export default function MyOrdersView({ user, onSelectTrackOrder, onReorder, addT
 
   const fetchUserOrders = async () => {
     setLoading(true);
+    let localOrders = [];
+    try {
+      localOrders = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+    } catch {}
+
     try {
       const activePhone = user?.phone || (() => {
         try {
@@ -64,25 +69,26 @@ export default function MyOrdersView({ user, onSelectTrackOrder, onReorder, addT
         }
       })();
 
-      if (!activePhone) {
-        setOrders([]);
-        setLoading(false);
-        return;
-      }
-
-      const cleanDigits = activePhone.replace(/\D/g, '').slice(-10);
-      const res = await fetchApi(`/api/orders?phone=${cleanDigits}`);
+      const phoneParam = activePhone ? `?phone=${encodeURIComponent(activePhone.replace(/\D/g, '').slice(-10))}` : '';
+      const res = await fetchApi(`/api/orders${phoneParam}`);
       if (res.ok) {
-        setOrders(await res.json());
-      } else {
-        setOrders([]);
+        const serverOrders = await res.json();
+        if (Array.isArray(serverOrders)) {
+          // Merge local cache and server orders
+          const map = new Map();
+          localOrders.forEach(o => { if (o && o.order_number) map.set(o.order_number, o); });
+          serverOrders.forEach(o => { if (o && o.order_number) map.set(o.order_number, o); });
+          const merged = Array.from(map.values()).sort((a, b) => new Date(b.created_at || Date.now()) - new Date(a.created_at || Date.now()));
+          setOrders(merged);
+          setLoading(false);
+          return;
+        }
       }
     } catch (err) {
-      console.error('Error loading orders', err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+      console.warn('Could not fetch server orders, displaying local orders:', err);
     }
+    setOrders(localOrders);
+    setLoading(false);
   };
 
   useEffect(() => {

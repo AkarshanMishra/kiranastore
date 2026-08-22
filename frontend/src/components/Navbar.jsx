@@ -18,7 +18,10 @@ export default function Navbar({
   darkMode,
   setDarkMode,
   language,
-  setLanguage
+  setLanguage,
+  products = [],
+  addToCart,
+  onSelectProduct
 }) {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [tempAddress, setTempAddress] = useState(userAddress);
@@ -33,6 +36,14 @@ export default function Navbar({
   const trendingSearches = language === 'HI'
     ? ['अमूल दूध', 'पनीर', 'मैगी 2-मिनट', 'लेस मसाला', 'कोका कोला', 'ओरियो', 'मक्खन']
     : ['Amul Milk', 'Paneer', 'Maggi 2-Min', 'Lays Masala', 'Coca Cola', 'Oreo', 'Butter'];
+
+  // Dynamic live search matched products
+  const matchedProducts = searchQuery.trim()
+    ? products.filter(p => {
+        const q = searchQuery.toLowerCase().trim();
+        return p.name.toLowerCase().includes(q) || (p.description && p.description.toLowerCase().includes(q));
+      }).slice(0, 6)
+    : [];
 
   const handleAddressSave = (e) => {
     e?.preventDefault();
@@ -208,15 +219,15 @@ export default function Navbar({
           {/* Search Bar (Full-width on Mobile, Centered on Desktop) */}
           <div className="w-full md:max-w-md lg:max-w-lg relative">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400" size={16} />
               <input
                 type="text"
                 value={searchQuery}
                 onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={language === 'HI' ? "खोजें 'दूध', 'पनीर', 'मैगी', 'चिप्स'..." : "Search 'milk', 'paneer', 'butter', 'chips'..."}
-                className="w-full bg-gray-100 hover:bg-gray-100/90 dark:bg-slate-800 dark:hover:bg-slate-700/80 focus:bg-white dark:focus:bg-slate-800 text-xs sm:text-sm pl-9 pr-16 py-2 sm:py-2.5 rounded-2xl border border-gray-200 dark:border-slate-700 focus:border-brand-green focus:ring-2 focus:ring-green-100 dark:focus:ring-emerald-950 outline-none transition font-medium dark:text-white"
+                className="w-full bg-white dark:bg-slate-800 text-gray-950 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-400 font-bold text-xs sm:text-sm pl-9 pr-16 py-2 sm:py-2.5 rounded-2xl border border-gray-300 dark:border-slate-700 focus:border-brand-green focus:ring-2 focus:ring-green-100 dark:focus:ring-emerald-950 outline-none transition shadow-xs"
               />
               
               {/* Search Accessories (Clear & Voice Mic) */}
@@ -224,9 +235,9 @@ export default function Navbar({
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="text-gray-400 hover:text-gray-600 bg-gray-200 dark:bg-slate-700 p-0.5 rounded-full"
+                    className="text-gray-500 hover:text-gray-700 bg-gray-200 dark:bg-slate-700 p-1 rounded-full"
                   >
-                    <X size={13} />
+                    <X size={12} />
                   </button>
                 )}
 
@@ -240,7 +251,65 @@ export default function Navbar({
               </div>
             </div>
 
-            {/* Search Dropdown Overlay */}
+            {/* 1. Live Dynamic Suggested Items Dropdown (As user types) */}
+            {isSearchFocused && searchQuery.trim() && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl p-2 sm:p-3 shadow-2xl border border-gray-200 dark:border-slate-800 z-50 animate-in fade-in duration-150 max-h-72 overflow-y-auto">
+                <div className="flex items-center justify-between text-[11px] font-black text-gray-400 dark:text-slate-500 px-2 py-1 uppercase tracking-wider border-b border-gray-100 dark:border-slate-800 mb-1">
+                  <span>Suggested Items ({matchedProducts.length})</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">10-Min Fast Delivery</span>
+                </div>
+
+                {matchedProducts.length > 0 ? (
+                  <div className="divide-y divide-gray-100 dark:divide-slate-800/60">
+                    {matchedProducts.map((p) => (
+                      <div
+                        key={p.id}
+                        onMouseDown={() => {
+                          if (onSelectProduct) onSelectProduct(p);
+                        }}
+                        className="p-2 hover:bg-emerald-50/70 dark:hover:bg-slate-800/80 rounded-xl transition flex items-center justify-between gap-2.5 cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            className="w-10 h-10 object-contain rounded-lg bg-gray-50 dark:bg-slate-800 p-1 flex-shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-xs font-black text-gray-900 dark:text-white block truncate group-hover:text-emerald-600 transition">
+                              {p.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {p.weight_unit} • <span className="font-extrabold text-emerald-600">₹{p.discount_price || p.price}</span>
+                              {p.discount_price && <span className="line-through text-gray-400 ml-1">₹{p.price}</span>}
+                            </span>
+                          </div>
+                        </div>
+
+                        {addToCart && (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              addToCart(p);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-xs transition active:scale-95 flex-shrink-0"
+                          >
+                            + Add
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-center text-xs text-gray-500">
+                    No instant match for "{searchQuery}". Press Enter to view catalog.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. Trending Searches Dropdown Overlay (When empty & focused) */}
             {isSearchFocused && !searchQuery && (
               <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 rounded-2xl p-3 sm:p-4 shadow-2xl border border-gray-100 dark:border-slate-800 z-50 animate-in fade-in duration-150">
                 <div className="flex items-center gap-1.5 text-[11px] font-black text-gray-400 mb-2 uppercase tracking-wider">

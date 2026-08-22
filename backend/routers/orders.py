@@ -188,10 +188,14 @@ def register_or_sync_customer(payload: CustomerCreateSchema, db: Session = Depen
     db.refresh(new_cust)
     return new_cust
 
+from models import Order, OrderItem, Product, Customer, SupportTicket
+from schemas import OrderCreateSchema, OrderSchema, CustomerCreateSchema, CustomerSchema, SupportTicketCreateSchema, SupportTicketSchema
+
 @router.get("/orders", response_model=List[OrderSchema])
 def list_orders(phone: Optional[str] = None, db: Session = Depends(get_db)):
     if not phone:
-        return []
+        # Fallback to returning recent orders
+        return db.query(Order).order_by(Order.created_at.desc()).limit(30).all()
 
     # Match normalized 10-digit phone
     clean_digits = ''.join(c for c in phone if c.isdigit())
@@ -200,8 +204,27 @@ def list_orders(phone: Optional[str] = None, db: Session = Depends(get_db)):
     elif clean_digits:
         match_phone = clean_digits
     else:
-        return []
+        return db.query(Order).order_by(Order.created_at.desc()).limit(30).all()
 
     orders = db.query(Order).filter(Order.phone.like(f"%{match_phone}%")).order_by(Order.created_at.desc()).limit(50).all()
     return orders
+
+@router.post("/support/tickets", response_model=SupportTicketSchema)
+async def create_support_ticket(payload: SupportTicketCreateSchema, db: Session = Depends(get_db)):
+    rand_id = f"TICK-{random.randint(100, 999)}"
+    ticket = SupportTicket(
+        ticket_id=rand_id,
+        customer_name=payload.customer_name,
+        phone=payload.phone,
+        order_number=payload.order_number,
+        category=payload.category or "General Inquiry",
+        subject=payload.subject,
+        message=payload.message,
+        status="OPEN",
+        priority="HIGH"
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
 

@@ -64,7 +64,7 @@ export default function ProductGrid({
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
           {products.map((product) => (
             <ProductCard
               key={product.id}
@@ -99,19 +99,19 @@ export default function ProductGrid({
       ].filter(shelf => shelf.products.length > 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-4 space-y-6 sm:space-y-8">
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-4 py-2 sm:py-4 space-y-5 sm:space-y-7">
       {/* ── Category Shelves (Single-Line Horizontal Scroll on Home) ────────────────── */}
       {dynamicShelves.map((shelf) => (
-        <section key={shelf.id} className="space-y-2.5 sm:space-y-3">
+        <section key={shelf.id} className="space-y-2 sm:space-y-2.5">
           {/* Shelf Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl">{shelf.icon}</span>
+              <span className="text-lg sm:text-xl">{shelf.icon}</span>
               <div>
-                <h2 className="text-sm sm:text-lg font-black text-gray-900 dark:text-white tracking-tight leading-tight">
+                <h2 className="text-xs sm:text-base font-black text-gray-900 dark:text-white tracking-tight leading-tight">
                   {shelf.title}
                 </h2>
-                <p className="text-[10px] sm:text-[11px] text-gray-500 dark:text-slate-400 font-medium">
+                <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-slate-400 font-medium">
                   {shelf.desc}
                 </p>
               </div>
@@ -120,20 +120,20 @@ export default function ProductGrid({
             {onSelectCategory && (
               <button
                 onClick={() => onSelectCategory(shelf.id)}
-                className="text-[11px] sm:text-xs font-black text-purple-600 dark:text-purple-400 hover:text-purple-700 flex items-center gap-1 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900 px-3 py-1.5 rounded-xl border border-purple-200 dark:border-purple-800 transition flex-shrink-0 active:scale-95 shadow-xs"
+                className="text-[10px] sm:text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2.5 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 transition flex-shrink-0 active:scale-95 shadow-2xs"
               >
                 <span>See All ({shelf.products.length})</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={11} />
               </button>
             )}
           </div>
 
           {/* Single-Line Horizontal Scroll Row */}
-          <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar pb-2 pt-1 snap-x snap-mandatory">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1.5 pt-0.5 snap-x snap-mandatory">
             {shelf.products.map((product) => (
               <div
                 key={product.id}
-                className="min-w-[150px] max-w-[165px] sm:min-w-[190px] sm:max-w-[205px] flex-shrink-0 snap-start flex flex-col"
+                className="min-w-[130px] max-w-[142px] sm:min-w-[170px] sm:max-w-[185px] flex-shrink-0 snap-start flex flex-col"
               >
                 <ProductCard
                   product={product}
