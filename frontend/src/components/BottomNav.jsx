@@ -59,7 +59,7 @@ export default function BottomNav({
                 onClick={() => setActiveTab(item.id)}
                 className={`flex-1 flex flex-col items-center py-1 rounded-2xl transition relative ${
                   isActive
-                    ? 'text-purple-600 dark:text-purple-400 font-black scale-105'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-black scale-105'
                     : 'text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-300 font-bold'
                 }`}
               >

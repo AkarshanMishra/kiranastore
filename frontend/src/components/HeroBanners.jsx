@@ -1,85 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, ShieldCheck, Flame } from 'lucide-react';
+import { Zap, Clock, Sparkles } from 'lucide-react';
 
 export default function HeroBanners() {
-  const [secondsLeft, setSecondsLeft] = useState(6130);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const banners = [
+    {
+      badge: "⚡ 10-MIN EXPRESS",
+      title: "Fresh Milk, Dairy & Kitchen Staples",
+      desc: "Instant delivery direct from your local Kirana store",
+      gradient: "from-emerald-700 via-emerald-600 to-teal-700",
+      icon: "🥛"
+    },
+    {
+      badge: "🔥 FLAT 40% OFF",
+      title: "Snacks, Cold Drinks & Midnight Munchies",
+      desc: "Party packs & namkeen starting at ₹10",
+      gradient: "from-purple-700 via-purple-600 to-indigo-700",
+      icon: "🍿"
+    },
+    {
+      badge: "💰 SMART SAVER",
+      title: "Monthly 30-Day Rashan Pack",
+      desc: "Upload handwritten slip or customize pack & save ₹500+",
+      gradient: "from-amber-600 via-orange-600 to-rose-600",
+      icon: "🌾"
+    }
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSecondsLeft(prev => prev > 0 ? prev - 1 : 0);
-    }, 1000);
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
-  const formatTimer = (secs) => {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
+  const active = banners[currentSlide];
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-3 sm:pt-4 pb-2 space-y-3 sm:space-y-4">
-      {/* Live Flash Deals Ticker Bar */}
-      <div className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-600 text-white rounded-2xl p-2.5 sm:p-3 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 sm:gap-2 text-xs font-black">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Flame size={16} className="text-yellow-300 animate-bounce flex-shrink-0" />
-          <span className="truncate text-[11px] sm:text-xs">⚡ FLASH SALE: UP TO 50% OFF ON FRESH DAIRY & SNACKS</span>
-        </div>
-        <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-md px-2.5 py-1 rounded-xl text-[10px] sm:text-xs font-mono font-bold self-end sm:self-auto flex-shrink-0">
-          <Clock size={12} className="text-yellow-300" />
-          <span>ENDS IN {formatTimer(secondsLeft)}</span>
-        </div>
-      </div>
-
-      {/* Main Promo Grid (Swipeable on Mobile, 3-column Grid on Desktop) */}
-      <div className="flex md:grid md:grid-cols-3 gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
-        {/* Banner 1 */}
-        <div className="min-w-[85vw] sm:min-w-[340px] md:min-w-0 snap-center bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-3xl p-4 sm:p-5 shadow-xs relative overflow-hidden flex flex-col justify-between min-h-[125px] sm:min-h-[140px] flex-shrink-0">
-          <div className="relative z-10">
-            <span className="bg-yellow-400 text-gray-900 font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
-              Superfast
+    <div className="max-w-7xl mx-auto px-2.5 sm:px-4 pt-2 pb-1">
+      <div className={`bg-gradient-to-r ${active.gradient} text-white rounded-2xl p-3 sm:p-3.5 shadow-2xs relative overflow-hidden transition-all duration-300 flex items-center justify-between min-h-[85px] sm:min-h-[95px]`}>
+        <div className="relative z-10 min-w-0 pr-2">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="bg-white/20 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.2 rounded uppercase tracking-wider">
+              {active.badge}
             </span>
-            <h3 className="text-base sm:text-xl font-black mt-1.5 sm:mt-2 leading-tight">
-              Express Home Delivery <br />Or Free Products!
-            </h3>
-            <p className="text-[11px] sm:text-xs text-emerald-100 mt-1">Dark store nearby within 1.2 km</p>
           </div>
-          <div className="absolute right-2 -bottom-2 opacity-20">
-            <Zap size={110} />
-          </div>
+          <h3 className="text-xs sm:text-sm font-black leading-tight truncate">
+            {active.title}
+          </h3>
+          <p className="text-[10px] sm:text-[11px] text-white/85 font-medium truncate mt-0.5">
+            {active.desc}
+          </p>
         </div>
 
-        {/* Banner 2 */}
-        <div className="min-w-[85vw] sm:min-w-[340px] md:min-w-0 snap-center bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-3xl p-4 sm:p-5 shadow-xs relative overflow-hidden flex flex-col justify-between min-h-[125px] sm:min-h-[140px] flex-shrink-0">
-          <div className="relative z-10">
-            <span className="bg-white text-orange-700 font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
-              Farm Fresh
-            </span>
-            <h3 className="text-base sm:text-xl font-black mt-1.5 sm:mt-2 leading-tight">
-              Fresh Milk, Paneer & Eggs <br />Direct From Dairy Mandi
-            </h3>
-            <p className="text-[11px] sm:text-xs text-orange-100 mt-1">Chilled in temperature-safe bags</p>
-          </div>
-          <div className="absolute right-3 bottom-0 text-white/20">
-            <Clock size={100} />
-          </div>
+        <div className="text-2xl sm:text-3xl flex-shrink-0 relative z-10 pr-1">
+          {active.icon}
         </div>
 
-        {/* Banner 3 */}
-        <div className="min-w-[85vw] sm:min-w-[340px] md:min-w-0 snap-center bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-3xl p-4 sm:p-5 shadow-xs relative overflow-hidden flex flex-col justify-between min-h-[125px] sm:min-h-[140px] flex-shrink-0">
-          <div className="relative z-10">
-            <span className="bg-pink-400 text-gray-900 font-black text-[9px] sm:text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
-              Midnight Specials
-            </span>
-            <h3 className="text-base sm:text-xl font-black mt-1.5 sm:mt-2 leading-tight">
-              Snacks, Drinks & Munchies <br />Up to 40% OFF
-            </h3>
-            <p className="text-[11px] sm:text-xs text-purple-200 mt-1">Instant delivery available 24/7</p>
-          </div>
-          <div className="absolute right-3 bottom-0 text-white/20">
-            <ShieldCheck size={100} />
-          </div>
+        {/* Slide Indicators */}
+        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+          {banners.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`transition-all ${currentSlide === idx ? 'w-3.5 h-1 bg-white rounded-full' : 'w-1 h-1 bg-white/40 rounded-full'}`}
+            />
+          ))}
         </div>
       </div>
     </div>

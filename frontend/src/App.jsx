@@ -473,18 +473,10 @@ export default function App() {
           />
         ) : (
           <>
+            {/* 1. Compact Auto-Slide Hero Banner */}
             <HeroBanners />
 
-            {/* Monthly Rashan 2-Option Service (Upload Photo / Build List) */}
-            <MonthlyRashanSection
-              onAddToCart={addToCart}
-              cart={cart}
-              language={language}
-              userAddress={userAddress}
-              setUserAddress={setUserAddress}
-              user={user}
-            />
-
+            {/* 2. Sleek Categories Filter Bar */}
             <CategoryBar
               categories={categories}
               selectedCategoryId={selectedCategoryId}
@@ -495,13 +487,19 @@ export default function App() {
               setFilterDiscountedOnly={setFilterDiscountedOnly}
             />
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-4">
-              <FlashSaleBanner />
-              <BrandsSection onSelectBrand={setSelectedBrand} selectedBrand={selectedBrand} />
-            </div>
+            {/* 3. Sleek 1-Line Monthly Rashan Strip */}
+            <MonthlyRashanSection
+              onAddToCart={addToCart}
+              cart={cart}
+              language={language}
+              userAddress={userAddress}
+              setUserAddress={setUserAddress}
+              user={user}
+            />
 
+            {/* 4. Instant Fast-Delivery Grocery Shelves & Catalog */}
             {loading ? (
-              <div className="py-20 text-center text-xs font-bold text-gray-500">
+              <div className="py-16 text-center text-xs font-bold text-gray-500">
                 ⚡ {language === 'HI' ? 'डार्क स्टोर कैटलॉग लोड हो रहा है...' : 'Fetching dark store catalog...'}
               </div>
             ) : (
@@ -518,7 +516,7 @@ export default function App() {
                 onClearCategory={() => setSelectedCategoryId(null)}
                 onSelectCategory={(catId) => {
                   setSelectedCategoryId(catId);
-                  window.scrollTo({ top: 300, behavior: 'smooth' });
+                  window.scrollTo({ top: 120, behavior: 'smooth' });
                 }}
               />
             )}

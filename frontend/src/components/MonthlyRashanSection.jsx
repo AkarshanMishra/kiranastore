@@ -477,112 +477,44 @@ export default function MonthlyRashanSection({
     : [];
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 my-4 sm:my-6">
-      
-      {/* ─── HOMEPAGE PROMINENT HERO CARDS ─────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-emerald-900 via-teal-900 to-slate-900 rounded-3xl p-4 sm:p-6 text-white shadow-xl relative overflow-hidden border border-emerald-500/20">
-        
-        {/* Ambient background glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="bg-emerald-400 text-gray-900 font-black text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                <Sparkles size={13} className="text-emerald-950" /> {language === 'HI' ? 'मासिक राशन सेवा' : 'Monthly Rashan Hub'}
-              </span>
-              <span className="text-[11px] text-emerald-300 font-bold hidden sm:inline">
-                ✨ Save ₹500+ & Hassle-Free 1st-of-Month Delivery
-              </span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black mt-1 text-white tracking-tight">
-              {language === 'HI' ? 'मासिक राशन ऑर्डर करें (2 आसान तरीके)' : 'Order Monthly Rashan (2 Easy Ways)'}
-            </h2>
-            <p className="text-xs text-emerald-100/80 mt-0.5">
-              {language === 'HI' 
-                ? 'हस्तलिखित पर्ची का फोटो भेजें या अपना राशन लिस्ट कस्टमाइज़ करें — अपना हब और पेमेंट चुनें'
-                : 'Upload photo of handwritten grocery slip OR customize 30-day kitchen basket — select delivery hub & payment'}
-            </p>
+    <>
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-4 py-1.5">
+      {/* ─── HOMEPAGE COMPACT RASHAN STRIP ─────────────────────────────────── */}
+      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 rounded-2xl p-3 text-white shadow-2xs relative overflow-hidden border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="bg-emerald-400 text-gray-950 font-black text-[8px] sm:text-[9px] px-2 py-0.2 rounded uppercase">
+              MONTHLY SAVINGS
+            </span>
+            <span className="text-[10px] text-emerald-300 font-bold">Save ₹500+ on 30-Day Kitchen Staples</span>
           </div>
-
-          {/* Quick Doorstep Service Indicator Pill */}
-          <div 
-            onClick={() => handleOpenModal('photo')}
-            className="cursor-pointer bg-black/30 hover:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-emerald-400/30 flex items-center gap-2 text-xs self-start md:self-auto transition"
-          >
-            <Store size={14} className="text-emerald-300 flex-shrink-0" />
-            <div className="text-left">
-              <span className="text-[9px] text-emerald-200 block font-bold leading-none">DOORSTEP DELIVERY</span>
-              <span className="font-extrabold text-white truncate max-w-[150px] block leading-tight">Express Kirana Service</span>
-            </div>
-          </div>
+          <h3 className="text-xs sm:text-sm font-black text-white truncate">
+            📸 Snap Grocery Slip or Build 30-Day Monthly Pack
+          </h3>
         </div>
 
-        {/* 2 Big Action Cards on Homepage */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 relative z-10">
-          
-          {/* Card 1: Upload Photograph of Rashan List */}
-          <div 
+        {/* 2 Compact Action Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
             onClick={() => handleOpenModal('photo')}
-            className="group cursor-pointer bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-emerald-400/30 hover:border-emerald-300 transition-all duration-200 shadow-md flex items-center justify-between gap-3 active:scale-98"
+            className="flex-1 sm:flex-none bg-amber-400 hover:bg-amber-300 text-gray-950 font-black text-[10px] sm:text-[11px] px-3 py-1.5 rounded-xl shadow-2xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-tr from-amber-400 to-orange-500 text-gray-900 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-                <Camera size={26} className="text-gray-900" />
-              </div>
-              <div>
-                <span className="bg-amber-400 text-gray-950 font-black text-[9px] px-2 py-0.5 rounded uppercase">
-                  1-Click Upload
-                </span>
-                <h3 className="font-black text-sm sm:text-base text-white mt-1 group-hover:text-yellow-300 transition-colors">
-                  {language === 'HI' ? '📸 राशन पर्ची का फोटो अपलोड करें' : '📸 Upload Rashan Slip Photo'}
-                </h3>
-                <p className="text-[11px] text-emerald-100 line-clamp-2 mt-0.5 font-medium">
-                  {language === 'HI' 
-                    ? 'कागज़ की पर्ची का फोटो भेजें, स्टोर टीम पैक करके घर पहुंचाएगी'
-                    : 'Snap handwritten slip or doctor prescription. We pack & deliver!'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/30 group-hover:bg-emerald-400 group-hover:text-gray-900 flex items-center justify-center transition-colors flex-shrink-0">
-              <ArrowRight size={16} />
-            </div>
-          </div>
+            <Camera size={13} />
+            <span>Upload Slip</span>
+          </button>
 
-          {/* Card 2: Make Your Monthly Rashan List */}
-          <div 
+          <button
             onClick={() => handleOpenModal('builder')}
-            className="group cursor-pointer bg-white/10 hover:bg-white/15 backdrop-blur-md rounded-2xl p-4 sm:p-5 border border-emerald-400/30 hover:border-emerald-300 transition-all duration-200 shadow-md flex items-center justify-between gap-3 active:scale-98"
+            className="flex-1 sm:flex-none bg-white/15 hover:bg-white/25 text-white font-black text-[10px] sm:text-[11px] px-3 py-1.5 rounded-xl border border-white/20 shadow-2xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-tr from-purple-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-                <ListPlus size={26} className="text-white" />
-              </div>
-              <div>
-                <span className="bg-purple-400 text-gray-950 font-black text-[9px] px-2 py-0.5 rounded uppercase">
-                  Smart List Builder
-                </span>
-                <h3 className="font-black text-sm sm:text-base text-white mt-1 group-hover:text-purple-300 transition-colors">
-                  {language === 'HI' ? '📝 मासिक राशन लिस्ट तैयार करें' : '📝 Make Monthly Rashan List'}
-                </h3>
-                <p className="text-[11px] text-emerald-100 line-clamp-2 mt-0.5 font-medium">
-                  {language === 'HI'
-                    ? 'आटा, चावल, दाल, तेल चुनें और बजट कैलकुलेटर से 1-क्लिक आर्डर करें'
-                    : 'Pick staples (Atta, Rice, Oil, Dal) or choose ready family packages.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="w-8 h-8 rounded-xl bg-purple-500/30 group-hover:bg-purple-400 group-hover:text-gray-900 flex items-center justify-center transition-colors flex-shrink-0">
-              <ArrowRight size={16} />
-            </div>
-          </div>
-
+            <ListPlus size={13} />
+            <span>Build Pack</span>
+          </button>
         </div>
       </div>
+    </div>
 
-      {/* ─── FULL INTERACTIVE MODAL ────────────────────────────────────────── */}
+    {/* ─── FULL INTERACTIVE MODAL ────────────────────────────────────────── */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 dark:text-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative flex flex-col max-h-[92vh]">
@@ -1246,7 +1178,6 @@ export default function MonthlyRashanSection({
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }
