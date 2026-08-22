@@ -58,6 +58,8 @@ class Order(Base):
     hub_name = Column(String, nullable=True) # e.g. "Sector 62 Express Dark Store"
     slip_image_url = Column(String, nullable=True) # Photo/Base64 of handwritten slip
     special_instructions = Column(String, nullable=True)
+    rating = Column(Integer, nullable=True)
+    rating_comment = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
@@ -102,4 +104,15 @@ class SupportTicket(Base):
     message = Column(String, nullable=False)
     status = Column(String, default="OPEN") # OPEN, IN_PROGRESS, RESOLVED
     priority = Column(String, default="HIGH") # NORMAL, HIGH, URGENT
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    desc = Column(String, nullable=False)
+    type = Column(String, default="ORDERS") # ORDERS, OFFERS, WALLET, SYSTEM
+    time = Column(String, default="Just now")
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

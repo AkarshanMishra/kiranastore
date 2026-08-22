@@ -222,8 +222,8 @@ def update_product_stock(
     db.refresh(product)
     return product
 
-from models import SupportTicket
-from schemas import SupportTicketSchema
+from models import SupportTicket, Notification
+from schemas import SupportTicketSchema, NotificationCreateSchema, NotificationSchema
 
 @router.get("/support/tickets", response_model=List[SupportTicketSchema])
 def get_all_support_tickets(db: Session = Depends(get_db)):
@@ -239,3 +239,21 @@ def update_support_ticket(ticket_id: str, payload: dict, db: Session = Depends(g
     db.commit()
     db.refresh(ticket)
     return ticket
+
+@router.get("/notifications", response_model=List[NotificationSchema])
+def get_admin_notifications(db: Session = Depends(get_db)):
+    return db.query(Notification).order_by(Notification.created_at.desc()).all()
+
+@router.post("/notifications", response_model=NotificationSchema)
+def broadcast_notification(payload: NotificationCreateSchema, db: Session = Depends(get_db)):
+    notif = Notification(
+        title=payload.title,
+        desc=payload.desc,
+        type=payload.type or "ORDERS",
+        time=payload.time or "Just now",
+        is_active=True
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+    return notif

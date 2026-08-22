@@ -44,6 +44,10 @@ export default function CartDrawer({
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatusMsg, setLocationStatusMsg] = useState(null);
 
+  // Delivery Notes & Special Instructions
+  const [deliveryNote, setDeliveryNote] = useState('');
+  const [selectedPresetNote, setSelectedPresetNote] = useState('');
+
   // Impulse Add Recommendations (1-Click Essentials)
   const impulseItems = [
     { id: 101, name: 'Amul Taaza Milk', weight_unit: '500 ml', price: 27, discount_price: 26, image_url: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=150&q=80' },
@@ -169,6 +173,12 @@ export default function CartDrawer({
       const activeUserPhone = user?.phone || savedUser?.phone || '+91 9876543210';
       const activeUserAddress = customAddressInput || userAddress || user?.address || savedUser?.address || 'Sector 62, Noida';
 
+      const fullInstructions = [
+        selectedPresetNote,
+        deliveryNote.trim(),
+        razorpayData ? `Paid via Razorpay Test Gateway (${razorpayData.razorpay_payment_id})` : ''
+      ].filter(Boolean).join(' • ');
+
       const payload = {
         user_name: activeUserName,
         phone: activeUserPhone,
@@ -177,7 +187,7 @@ export default function CartDrawer({
         delivery_slot_type: deliverySlot === 'NEXT_DAY' ? 'NEXT_DAY' : 'SAME_DAY',
         tip: tipAmount,
         discount: appliedDiscount + pointsDiscount,
-        special_instructions: razorpayData ? `Paid via Razorpay Test Gateway (${razorpayData.razorpay_payment_id})` : undefined,
+        special_instructions: fullInstructions || undefined,
         items: items.map(item => ({
           product_id: item.id,
           quantity: item.quantity
@@ -407,6 +417,42 @@ export default function CartDrawer({
                     <span>📅 Next Day</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Delivery Instructions & Additional Notes */}
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-gray-200 dark:border-slate-700 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-gray-900 dark:text-white flex items-center gap-1.5">
+                    📝 Delivery Instructions & Notes
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">Optional</span>
+                </div>
+
+                {/* Preset Chips */}
+                <div className="flex flex-wrap gap-1.5">
+                  {['🔔 Ring Bell', '🚪 Leave at Door', '📞 Call on Arrival', '🛡️ Leave with Guard'].map(chip => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setSelectedPresetNote(selectedPresetNote === chip ? '' : chip)}
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-xl border transition active:scale-95 cursor-pointer ${
+                        selectedPresetNote === chip
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-gray-50 dark:bg-slate-900 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+
+                <input
+                  type="text"
+                  value={deliveryNote}
+                  onChange={(e) => setDeliveryNote(e.target.value)}
+                  placeholder="Add specific instructions for rider/store..."
+                  className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs text-gray-900 dark:text-white outline-none focus:border-emerald-600 font-medium"
+                />
               </div>
 
               {/* Cart Items List */}

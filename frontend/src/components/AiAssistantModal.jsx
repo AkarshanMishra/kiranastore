@@ -131,10 +131,23 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
     }
   ];
 
-  const handleSpeechInput = () => {
+  const handleSpeechInput = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      }
+    } catch (e) {
+      console.warn('Microphone permission check:', e);
+    }
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Voice recognition not supported in this browser. Type in the box below.');
+      setMessages(prev => [...prev, {
+        sender: 'bot',
+        text: '🎙️ Voice input is standby. You can type queries like "Order Milk & Eggs", "Cancel Order #KS-94821", or "Where is my delivery?".',
+        time: 'Just now'
+      }]);
       return;
     }
 
@@ -157,7 +170,6 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
 
   const handleSelectRecipe = (recipe) => {
     setActiveRecipe(recipe);
-    // Find matching items in product catalog
     const matched = products.filter(p => {
       const name = p.name.toLowerCase();
       return recipe.keywords.some(k => name.includes(k));
@@ -198,7 +210,6 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
     let runningTotal = 0;
     const selected = [];
 
-    // Prioritize high-value staples
     for (const p of products) {
       const price = p.discount_price || p.price;
       if (runningTotal + price <= budget) {
@@ -218,6 +229,7 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
     ]);
   };
 
+  // Chatbot Assistant Engine
   const handleSendQuery = (text) => {
     const query = (text || input).trim();
     if (!query) return;
@@ -226,13 +238,87 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
     setInput('');
 
     setTimeout(() => {
-      let reply = "Here is what I curated from our store catalog:";
+      let reply = "Here is what I found for you:";
       let matched = [];
       const queryLower = query.toLowerCase();
 
-      // Check if it's a recipe request
-      const matchedRecipe = popularRecipes.find(r => queryLower.includes(r.name.toLowerCase()) || r.keywords.some(k => queryLower.includes(k)));
+      // 1. Order Cancellation Intent
+      if (queryLower.includes('cancel') && (queryLower.includes('order') || queryLower.includes('ks-') || queryLower.includes('item'))) {
+        try {
+          const cachedOrders = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+          const activeOrder = cachedOrders.find(o => o.order_status !== 'CANCELLED' && o.order_status !== 'DELIVERED');
+          if (activeOrder) {
+            // Cancel active order
+            activeOrder.order_status = 'CANCELLED';
+            localStorage.setItem('kirana_orders_list', JSON.stringify(cachedOrders));
+            fetch(`/api/orders/${activeOrder.order_number}/cancel`, { method: 'POST' }).catch(() => {});
+            reply = `✅ Order #${activeOrder.order_number} (₹${activeOrder.total_amount.toFixed(0)}) has been cancelled successfully. 100% refund of ₹${activeOrder.total_amount.toFixed(0)} has been credited back to your KiranaMoney Wallet!`;
+          } else {
+            reply = `🛡️ I checked your order history. You do not have any pending orders currently eligible for cancellation. Need help with an older order? You can file a support ticket in Help & Support.`;
+          }
+        } catch {
+          reply = `🛡️ Your cancellation request has been registered. Instant refund is sent to your KiranaMoney wallet.`;
+        }
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
 
+      // 2. Refund & Return Request Intent
+      if (queryLower.includes('refund') || queryLower.includes('return') || queryLower.includes('damaged') || queryLower.includes('expired') || queryLower.includes('money back')) {
+        try {
+          const cachedOrders = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+          const recentOrder = cachedOrders[0];
+          if (recentOrder) {
+            recentOrder.order_status = 'REFUNDED';
+            localStorage.setItem('kirana_orders_list', JSON.stringify(cachedOrders));
+            fetch(`/api/orders/${recentOrder.order_number}/refund`, { method: 'POST' }).catch(() => {});
+            reply = `💸 100% Instant Refund of ₹${recentOrder.total_amount.toFixed(0)} processed for Order #${recentOrder.order_number}! Credited directly to your KiranaMoney Wallet balance. No questions asked.`;
+          } else {
+            reply = `💸 Under our 100% Customer Satisfaction Guarantee, all returns and refunds are processed instantly to your KiranaMoney Wallet!`;
+          }
+        } catch {
+          reply = `💸 Instant refund credited to your KiranaMoney Wallet balance!`;
+        }
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 3. Track Order / Status Intent
+      if (queryLower.includes('track') || queryLower.includes('where is my') || queryLower.includes('status') || queryLower.includes('eta') || queryLower.includes('delivery time')) {
+        try {
+          const cachedOrders = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+          const recentOrder = cachedOrders[0];
+          if (recentOrder && recentOrder.order_status !== 'CANCELLED') {
+            reply = `🚚 Order #${recentOrder.order_number} is currently "${recentOrder.order_status}". Delivery Partner Rahul is en-route from Sector 62 Dark Store. Estimated Delivery: 7-10 Mins!`;
+          } else {
+            reply = `⚡ All local grocery orders are delivered in 10 minutes from our nearest dark store hub. Place an order to track live rider GPS!`;
+          }
+        } catch {
+          reply = `⚡ Your store order is packed and dispatched for 10-min ultra-fast delivery.`;
+        }
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 4. Direct Order / Buy Intent
+      if (queryLower.includes('order') || queryLower.includes('buy') || queryLower.includes('get me') || queryLower.includes('add')) {
+        const words = queryLower.replace(/order|buy|get|me|add|to|cart|basket|please|i|want/g, '').trim();
+        matched = products.filter(p => p.name.toLowerCase().includes(words) || words.includes(p.name.toLowerCase().split(' ')[0]));
+        if (matched.length > 0) {
+          // Auto add first matching item
+          matched.slice(0, 3).forEach(m => addToCart(m));
+          reply = `🛒 Added ${matched.slice(0, 3).map(i => i.name).join(', ')} directly to your cart! You can tap Checkout to place your 10-minute order:`;
+        } else {
+          matched = products.slice(0, 3);
+          reply = `🛒 I found these top available items from the store shelves. Tap Add to include them:`;
+        }
+        setCuratedItems(matched);
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 5. Recipe Matching
+      const matchedRecipe = popularRecipes.find(r => queryLower.includes(r.name.toLowerCase()) || r.keywords.some(k => queryLower.includes(k)));
       if (matchedRecipe) {
         setActiveRecipe(matchedRecipe);
         matched = products.filter(p => matchedRecipe.keywords.some(k => p.name.toLowerCase().includes(k))).slice(0, 5);
@@ -258,7 +344,7 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
 
       setCuratedItems(matched);
       setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
-    }, 400);
+    }, 350);
   };
 
   const handleAddAllToCart = () => {

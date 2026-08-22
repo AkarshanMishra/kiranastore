@@ -554,6 +554,28 @@ export default function OrdersView({ orders = [], onUpdateStatus, onDeleteOrder 
                     📝 Verify slip items above & set total bill amount upon acceptance.
                   </div>
                 ) : null}
+
+                {/* Additional Customer Special Instructions / Notes */}
+                {order.special_instructions && (
+                  <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5 mb-3 text-xs text-blue-900 flex items-start gap-1.5 font-medium">
+                    <span className="font-black text-blue-700 flex-shrink-0">📝 Customer Note:</span>
+                    <span>{order.special_instructions}</span>
+                  </div>
+                )}
+
+                {/* Customer Rating Feedback if Rated */}
+                {order.rating && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-1 font-black text-amber-800">
+                      <span>⭐ {order.rating}.0 / 5.0 Rating</span>
+                    </div>
+                    {order.rating_comment && (
+                      <span className="text-[11px] text-amber-700 italic truncate max-w-[200px]">
+                        "{order.rating_comment}"
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Actions Footer */}

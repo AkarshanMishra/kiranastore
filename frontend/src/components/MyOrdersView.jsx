@@ -132,52 +132,122 @@ export default function MyOrdersView({ user, onSelectTrackOrder, onReorder, addT
     });
   });
 
-  // Submit Rating
-  const handleRateSubmit = (e) => {
+  // Submit Rating to Backend
+  const handleRateSubmit = async (e) => {
     e.preventDefault();
     if (!selectedRatingOrder) return;
+    const orderIdentifier = selectedRatingOrder.id || selectedRatingOrder.order_number;
+
+    // Update local rated orders
     setRatedOrders((prev) => ({
       ...prev,
-      [selectedRatingOrder.id]: {
+      [orderIdentifier]: {
         rating: userRating,
         comment: ratingComment || 'Excellent quality and on-time store delivery!'
       }
     }));
+
+    // Update cached orders list in localStorage
+    try {
+      const cached = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+      const updated = cached.map((o) =>
+        (o.id === selectedRatingOrder.id || o.order_number === selectedRatingOrder.order_number)
+          ? { ...o, rating: userRating, rating_comment: ratingComment }
+          : o
+      );
+      localStorage.setItem('kirana_orders_list', JSON.stringify(updated));
+    } catch {}
+
+    // Send to backend API
+    try {
+      await fetchApi(`/api/orders/${orderIdentifier}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating: userRating,
+          comment: ratingComment || 'Excellent store delivery and product quality.'
+        })
+      });
+    } catch (err) {
+      console.warn('Could not post rating to API:', err);
+    }
+
     setRatingSuccess(true);
     setTimeout(() => {
       setRatingSuccess(false);
       setSelectedRatingOrder(null);
       setRatingComment('');
+      fetchUserOrders();
     }, 1000);
   };
 
   // Submit Cancel Order
-  const handleCancelSubmit = (e) => {
+  const handleCancelSubmit = async (e) => {
     e.preventDefault();
     if (!selectedCancelOrder) return;
+    const orderIdentifier = selectedCancelOrder.id || selectedCancelOrder.order_number;
+
     setOrders((prev) =>
       prev.map((o) => (o.id === selectedCancelOrder.id ? { ...o, order_status: 'CANCELLED' } : o))
     );
+
+    // Update local cache
+    try {
+      const cached = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+      const updated = cached.map((o) =>
+        (o.id === selectedCancelOrder.id || o.order_number === selectedCancelOrder.order_number)
+          ? { ...o, order_status: 'CANCELLED' }
+          : o
+      );
+      localStorage.setItem('kirana_orders_list', JSON.stringify(updated));
+    } catch {}
+
+    try {
+      await fetchApi(`/api/orders/${orderIdentifier}/cancel`, { method: 'POST' });
+    } catch (err) {
+      console.warn('Could not cancel on backend:', err);
+    }
+
     setCancelSuccess(true);
     setTimeout(() => {
       setCancelSuccess(false);
       setSelectedCancelOrder(null);
-      alert(`Order #${selectedCancelOrder.order_number} cancelled. Instant refund of ₹${selectedCancelOrder.total_amount.toFixed(0)} credited to your KiranaMoney Wallet.`);
+      fetchUserOrders();
     }, 900);
   };
 
   // Submit Return / Refund Request
-  const handleReturnSubmit = (e) => {
+  const handleReturnSubmit = async (e) => {
     e.preventDefault();
     if (!selectedReturnOrder) return;
+    const orderIdentifier = selectedReturnOrder.id || selectedReturnOrder.order_number;
+
     setOrders((prev) =>
       prev.map((o) => (o.id === selectedReturnOrder.id ? { ...o, order_status: 'REFUNDED' } : o))
     );
+
+    // Update local cache
+    try {
+      const cached = JSON.parse(localStorage.getItem('kirana_orders_list') || '[]');
+      const updated = cached.map((o) =>
+        (o.id === selectedReturnOrder.id || o.order_number === selectedReturnOrder.order_number)
+          ? { ...o, order_status: 'REFUNDED' }
+          : o
+      );
+      localStorage.setItem('kirana_orders_list', JSON.stringify(updated));
+    } catch {}
+
+    try {
+      await fetchApi(`/api/orders/${orderIdentifier}/refund`, { method: 'POST' });
+    } catch (err) {
+      console.warn('Could not process refund on backend:', err);
+    }
+
     setReturnSuccess(true);
     setTimeout(() => {
       setReturnSuccess(false);
       setSelectedReturnOrder(null);
-      alert(`Return & Refund request approved for Order #${selectedReturnOrder.order_number}. ₹${selectedReturnOrder.total_amount.toFixed(0)} ${refundMode === 'WALLET' ? 'credited to KiranaMoney Wallet' : 'refund initiated to original payment source'}.`);
+      fetchUserOrders();
     }, 900);
   };
 
@@ -597,17 +667,27 @@ export default function MyOrdersView({ user, onSelectTrackOrder, onReorder, addT
                       </div>
                     ) : null}
 
+                    {/* Special Instructions / Additional Note */}
+                    {order.special_instructions && (
+                      <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 mb-3 flex items-start gap-2 text-xs">
+                        <span className="font-black text-slate-700 dark:text-slate-300 flex-shrink-0">📝 Note:</span>
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                          {order.special_instructions}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Rating Feedback badge if rated */}
-                    {userReview && (
+                    {(userReview || order.rating) && (
                       <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 mb-3 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-1.5">
                           <Star size={14} className="fill-amber-500 text-amber-500" />
                           <span className="font-black text-amber-900 dark:text-amber-200">
-                            Rated {userReview.rating}.0 Stars by You
+                            Rated {userReview?.rating || order.rating}.0 Stars
                           </span>
                         </div>
-                        <span className="text-[11px] text-amber-800 dark:text-amber-300 italic">
-                          "{userReview.comment}"
+                        <span className="text-[11px] text-amber-800 dark:text-amber-300 italic truncate max-w-[200px]">
+                          "{userReview?.comment || order.rating_comment || 'Great service!'}"
                         </span>
                       </div>
                     )}

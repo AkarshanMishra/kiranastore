@@ -1,37 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, Sparkles } from 'lucide-react';
+import { Zap, Clock, Sparkles, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
 
 export default function HeroBanners() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const banners = [
     {
-      badge: "⚡ 10-MIN EXPRESS",
-      title: "Fresh Milk, Dairy & Kitchen Staples",
-      desc: "Instant delivery direct from your local Kirana store",
-      gradient: "from-emerald-700 via-emerald-600 to-teal-700",
-      icon: "🥛"
+      badge: "⚡ 10-MIN EXPRESS HUB",
+      headline: "Fresh Farm Dairy & Daily Staples",
+      subtext: "Amul Milk, Paneer & Breads straight from dark store shelves",
+      cta: "Shop Dairy",
+      bgGradient: "from-emerald-950 via-teal-900 to-emerald-900",
+      accentBorder: "border-emerald-500/40",
+      badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-400/40",
+      icon: "🥛",
+      perk: "Zero Delivery Fee on ₹199+"
     },
     {
-      badge: "🔥 FLAT 40% OFF",
-      title: "Snacks, Cold Drinks & Midnight Munchies",
-      desc: "Party packs & namkeen starting at ₹10",
-      gradient: "from-purple-700 via-purple-600 to-indigo-700",
-      icon: "🍿"
+      badge: "🔥 FLASH DEALS • UP TO 40% OFF",
+      headline: "Midnight Munchies & Party Packs",
+      subtext: "Lay's, Cold Beverages, Chocolates & Namkeen at wholesale prices",
+      cta: "Explore Deals",
+      bgGradient: "from-purple-950 via-indigo-950 to-purple-900",
+      accentBorder: "border-purple-500/40",
+      badgeColor: "bg-purple-500/20 text-purple-300 border-purple-400/40",
+      icon: "🍿",
+      perk: "Instant 10-Min Dispatch"
     },
     {
-      badge: "💰 SMART SAVER",
-      title: "Monthly 30-Day Rashan Pack",
-      desc: "Upload handwritten slip or customize pack & save ₹500+",
-      gradient: "from-amber-600 via-orange-600 to-rose-600",
-      icon: "🌾"
+      badge: "👑 MONTHLY RASHAN HUB",
+      headline: "Save ₹500+ on 30-Day Household Grocery",
+      subtext: "Upload handwritten slip photo or build custom monthly pack",
+      cta: "Upload Slip",
+      bgGradient: "from-amber-950 via-orange-950 to-amber-900",
+      accentBorder: "border-amber-500/40",
+      badgeColor: "bg-amber-500/20 text-amber-300 border-amber-400/40",
+      icon: "🌾",
+      perk: "Free Dark Store Itemization"
     }
   ];
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, 4000);
+    }, 4500);
     return () => clearInterval(timer);
   }, [banners.length]);
 
@@ -39,32 +51,51 @@ export default function HeroBanners() {
 
   return (
     <div className="max-w-7xl mx-auto px-2.5 sm:px-4 pt-2 pb-1">
-      <div className={`bg-gradient-to-r ${active.gradient} text-white rounded-2xl p-3 sm:p-3.5 shadow-2xs relative overflow-hidden transition-all duration-300 flex items-center justify-between min-h-[85px] sm:min-h-[95px]`}>
-        <div className="relative z-10 min-w-0 pr-2">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className="bg-white/20 text-white text-[8px] sm:text-[9px] font-black px-2 py-0.2 rounded uppercase tracking-wider">
-              {active.badge}
-            </span>
-          </div>
-          <h3 className="text-xs sm:text-sm font-black leading-tight truncate">
-            {active.title}
-          </h3>
-          <p className="text-[10px] sm:text-[11px] text-white/85 font-medium truncate mt-0.5">
-            {active.desc}
-          </p>
-        </div>
+      <div className={`relative overflow-hidden rounded-3xl border ${active.accentBorder} bg-gradient-to-br ${active.bgGradient} p-4 sm:p-4.5 shadow-md transition-all duration-500`}>
+        {/* Subtle Ambient Glow */}
+        <div className="absolute -top-10 -right-10 w-36 h-36 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="text-2xl sm:text-3xl flex-shrink-0 relative z-10 pr-1">
-          {active.icon}
+        <div className="relative z-10 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {/* Top Badge & Micro-perk */}
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className={`text-[9px] sm:text-[10px] font-black px-2.5 py-0.5 rounded-full border tracking-wide uppercase flex items-center gap-1 ${active.badgeColor}`}>
+                {active.badge}
+              </span>
+              <span className="text-[9px] text-white/70 font-semibold hidden xs:inline-flex items-center gap-1">
+                <Sparkles size={10} className="text-amber-400" /> {active.perk}
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h3 className="text-xs sm:text-base font-black text-white leading-tight tracking-tight drop-shadow-xs">
+              {active.headline}
+            </h3>
+
+            {/* Subtext */}
+            <p className="text-[10px] sm:text-xs text-white/80 font-medium truncate mt-0.5">
+              {active.subtext}
+            </p>
+          </div>
+
+          {/* Icon & 3D Glass Emoji Display */}
+          <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-inner text-2xl sm:text-3xl">
+            {active.icon}
+          </div>
         </div>
 
         {/* Slide Indicators */}
-        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+        <div className="flex items-center justify-center gap-1.5 mt-2.5 pt-1">
           {banners.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSlide(idx)}
-              className={`transition-all ${currentSlide === idx ? 'w-3.5 h-1 bg-white rounded-full' : 'w-1 h-1 bg-white/40 rounded-full'}`}
+              className={`transition-all duration-300 ${
+                currentSlide === idx
+                  ? 'w-6 h-1.5 bg-gradient-to-r from-white to-white/90 rounded-full shadow-xs'
+                  : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/50 rounded-full'
+              }`}
             />
           ))}
         </div>

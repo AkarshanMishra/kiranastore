@@ -94,6 +94,8 @@ class OrderSchema(BaseModel):
     hub_name: Optional[str] = None
     slip_image_url: Optional[str] = None
     special_instructions: Optional[str] = None
+    rating: Optional[int] = None
+    rating_comment: Optional[str] = None
     accepted_by_owner: Optional[bool] = False
     eta_minutes: int
     created_at: datetime
@@ -101,6 +103,10 @@ class OrderSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class OrderRateSchema(BaseModel):
+    rating: int
+    comment: Optional[str] = None
 
 class OrderStatusUpdateSchema(BaseModel):
     order_status: str # PLACED, CONFIRMED, PACKING, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
@@ -177,6 +183,23 @@ class SupportTicketSchema(BaseModel):
     message: str
     status: str
     priority: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NotificationCreateSchema(BaseModel):
+    title: str
+    desc: str
+    type: Optional[str] = "ORDERS" # ORDERS, OFFERS, WALLET, SYSTEM
+    time: Optional[str] = "Just now"
+
+class NotificationSchema(BaseModel):
+    id: int
+    title: str
+    desc: str
+    type: str
+    time: str
     created_at: datetime
 
     class Config:

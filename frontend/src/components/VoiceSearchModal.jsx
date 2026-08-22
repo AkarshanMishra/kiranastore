@@ -29,62 +29,77 @@ export default function VoiceSearchModal({ isOpen, onClose, onQuerySubmit }) {
       return;
     }
 
-    // Check Web Speech API support
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSpeechSupported(false);
-      setStatusMessage('Speech recognition not supported in this browser. Tap any grocery suggestion below:');
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-IN';
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        setStatusMessage('Listening... Speak grocery item now (e.g. "Amul Milk" or "Atta")');
-      };
-
-      recognition.onresult = (event) => {
-        let currentTranscript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
+    // Request browser/native mic permission first, then start speech recognition
+    const startAudioEngine = async () => {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop stream immediately as SpeechRecognition handles capture
+          stream.getTracks().forEach(track => track.stop());
         }
-        setTranscript(currentTranscript);
+      } catch (micErr) {
+        console.warn('Microphone permission query:', micErr);
+      }
 
-        if (event.results[0].isFinal) {
-          setStatusMessage(`Identified: "${currentTranscript}"`);
-          setTimeout(() => {
-            onQuerySubmit(currentTranscript);
-            onClose();
-          }, 700);
-        }
-      };
+      // Check Web Speech API support
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setSpeechSupported(false);
+        setStatusMessage('Speech recognition not supported in this browser. Tap any grocery suggestion below:');
+        return;
+      }
 
-      recognition.onerror = (event) => {
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-IN';
+
+        recognition.onstart = () => {
+          setIsListening(true);
+          setStatusMessage('Listening... Speak grocery item now (e.g. "Amul Milk" or "Atta")');
+        };
+
+        recognition.onresult = (event) => {
+          let currentTranscript = '';
+          for (let i = 0; i < event.results.length; i++) {
+            currentTranscript += event.results[i][0].transcript;
+          }
+          setTranscript(currentTranscript);
+
+          if (event.results[0].isFinal) {
+            setStatusMessage(`Identified: "${currentTranscript}"`);
+            setTimeout(() => {
+              onQuerySubmit(currentTranscript);
+              onClose();
+            }, 700);
+          }
+        };
+
+        recognition.onerror = (event) => {
+          setIsListening(false);
+          if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+            setStatusMessage('Microphone permission needed. Tap mic button to allow or tap a suggestion below:');
+          } else if (event.error === 'no-speech') {
+            setStatusMessage('No speech detected. Tap mic to speak or tap a suggestion:');
+          } else {
+            setStatusMessage('Voice recognition ready. Tap mic or a suggestion below:');
+          }
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+      } catch (err) {
         setIsListening(false);
-        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-          setStatusMessage('Microphone permission blocked. Please allow mic in browser or tap below:');
-        } else if (event.error === 'no-speech') {
-          setStatusMessage('No speech detected. Tap the mic button to try again or tap a suggestion:');
-        } else {
-          setStatusMessage('Voice recognition standby. Tap below to search:');
-        }
-      };
+        setStatusMessage('Tap mic to start or select a suggestion:');
+      }
+    };
 
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      setIsListening(false);
-      setStatusMessage('Tap mic to start or select a suggestion:');
-    }
+    startAudioEngine();
 
     return () => {
       if (recognitionRef.current) {

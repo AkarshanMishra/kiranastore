@@ -209,6 +209,58 @@ def list_orders(phone: Optional[str] = None, db: Session = Depends(get_db)):
     orders = db.query(Order).filter(Order.phone.like(f"%{match_phone}%")).order_by(Order.created_at.desc()).limit(50).all()
     return orders
 
+@router.post("/orders/{order_id_or_number}/rate", response_model=OrderSchema)
+def rate_order(order_id_or_number: str, payload: OrderRateSchema, db: Session = Depends(get_db)):
+    if order_id_or_number.isdigit():
+        order = db.query(Order).filter(Order.id == int(order_id_or_number)).first()
+    else:
+        order = db.query(Order).filter(Order.order_number == order_id_or_number).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.rating = payload.rating
+    order.rating_comment = payload.comment
+    db.commit()
+    db.refresh(order)
+    return order
+
+@router.post("/orders/{order_id_or_number}/cancel", response_model=OrderSchema)
+def cancel_order(order_id_or_number: str, db: Session = Depends(get_db)):
+    if order_id_or_number.isdigit():
+        order = db.query(Order).filter(Order.id == int(order_id_or_number)).first()
+    else:
+        order = db.query(Order).filter(Order.order_number == order_id_or_number).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.order_status = "CANCELLED"
+    db.commit()
+    db.refresh(order)
+    return order
+
+@router.post("/orders/{order_id_or_number}/refund", response_model=OrderSchema)
+def refund_order(order_id_or_number: str, db: Session = Depends(get_db)):
+    if order_id_or_number.isdigit():
+        order = db.query(Order).filter(Order.id == int(order_id_or_number)).first()
+    else:
+        order = db.query(Order).filter(Order.order_number == order_id_or_number).first()
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.order_status = "REFUNDED"
+    order.payment_status = "REFUNDED_TO_WALLET"
+    db.commit()
+    db.refresh(order)
+    return order
+
+@router.get("/notifications", response_model=List[NotificationSchema])
+def list_notifications(db: Session = Depends(get_db)):
+    notifs = db.query(Notification).filter(Notification.is_active == True).order_by(Notification.created_at.desc()).limit(20).all()
+    return notifs
+
 @router.post("/support/tickets", response_model=SupportTicketSchema)
 async def create_support_ticket(payload: SupportTicketCreateSchema, db: Session = Depends(get_db)):
     rand_id = f"TICK-{random.randint(100, 999)}"

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Bell, Truck, Tag, Wallet, Sparkles, CheckCircle2, ArrowRight, Check } from 'lucide-react';
+import { fetchApi } from '../apiClient';
 
 export default function NotificationsDrawer({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('ALL'); // 'ALL' | 'ORDERS' | 'OFFERS'
@@ -45,6 +46,36 @@ export default function NotificationsDrawer({ isOpen, onClose }) {
       color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-950"
     }
   ]);
+
+  useEffect(() => {
+    const fetchLiveNotifications = async () => {
+      try {
+        const res = await fetchApi('/api/notifications');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const mapped = data.map((n, idx) => ({
+              id: n.id || `live-${idx}`,
+              type: n.type || 'OFFERS',
+              title: n.title,
+              desc: n.desc,
+              time: n.time || 'Just now',
+              icon: n.type === 'ORDERS' ? Truck : n.type === 'WALLET' ? Wallet : Tag,
+              unread: true,
+              color: n.type === 'ORDERS' ? 'text-blue-500 bg-blue-50 dark:bg-blue-950' : n.type === 'WALLET' ? 'text-purple-500 bg-purple-50 dark:bg-purple-950' : 'text-amber-500 bg-amber-50 dark:bg-amber-950'
+            }));
+            setNotificationsList(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load live notifications:', err);
+      }
+    };
+
+    if (isOpen) {
+      fetchLiveNotifications();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
