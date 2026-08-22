@@ -26,7 +26,6 @@ import { X, Heart, Bot } from 'lucide-react';
 import { defaultCategories, defaultProducts } from './data/catalog';
 import { fetchApi } from './apiClient';
 import { App as CapacitorApp } from '@capacitor/app';
-import { ToastContainer, showToast } from './components/Toast';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(false);
@@ -49,7 +48,6 @@ export default function App() {
   const handleCustomerLogout = () => {
     localStorage.removeItem('kirana_customer_user');
     setUser(null);
-    showToast('Logged out successfully.', 'info');
   };
 
   const [categories, setCategories] = useState(defaultCategories);
@@ -194,13 +192,6 @@ export default function App() {
     };
   }, [handleGoBack]);
 
-  // Override native alert to show modern toast box
-  useEffect(() => {
-    window.alert = (msg) => {
-      showToast(String(msg), 'info', 3500);
-    };
-  }, []);
-
   // Fetch Categories
   const loadCategories = () => {
     fetchApi('/api/categories')
@@ -263,10 +254,8 @@ export default function App() {
       const next = { ...prev };
       if (next[product.id]) {
         delete next[product.id];
-        showToast(`Removed from saved items`, 'info', 2000);
       } else {
         next[product.id] = product;
-        showToast(`❤️ Saved "${product.name}" to Wishlist!`, 'success', 2500);
       }
       return next;
     });
@@ -277,7 +266,6 @@ export default function App() {
     setCart((prev) => {
       const existing = prev[product.id];
       const qty = existing ? existing.quantity + 1 : 1;
-      showToast(`🛒 Added "${product.name}" to Cart (${qty})`, 'cart', 2200);
       return {
         ...prev,
         [product.id]: {
@@ -293,7 +281,6 @@ export default function App() {
       const existing = prev[productId];
       if (!existing) return prev;
       if (existing.quantity === 1) {
-        showToast(`Removed item from Cart`, 'info', 1800);
         const next = { ...prev };
         delete next[productId];
         return next;
@@ -371,12 +358,10 @@ export default function App() {
           onLoginSuccess={(u) => {
             setUser(u);
             if (u.address) setUserAddress(u.address);
-            showToast(`Welcome back, ${u.name}! 👋`, 'success');
           }}
           onBackToStore={null}
           setUserAddress={setUserAddress}
         />
-        <ToastContainer />
       </div>
     );
   }
@@ -674,9 +659,6 @@ export default function App() {
           <span>Press back again to exit</span>
         </div>
       )}
-
-      {/* Global Animated Toast Notification System */}
-      <ToastContainer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, User, MapPin, Mail, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, ArrowLeft, Lock, KeyRound, Store, Gift, HeartHandshake } from 'lucide-react';
+import { Phone, User, MapPin, Mail, ArrowRight, ShieldCheck, Sparkles, CheckCircle2, ArrowLeft, Lock, KeyRound, Store, Gift, HeartHandshake, Crosshair, Loader2, Navigation } from 'lucide-react';
 
 export default function CustomerAuthPage({
   onLoginSuccess,
@@ -22,29 +22,96 @@ export default function CustomerAuthPage({
   const [signupOtp, setSignupOtp] = useState('1207');
   const [signupStep, setSignupStep] = useState('details'); // 'details' | 'otp'
 
+  // Live GPS Location Detection
+  const [isGpsLocating, setIsGpsLocating] = useState(false);
+  const [gpsLocationMsg, setGpsLocationMsg] = useState(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+
+  // Validation Helpers
+  const isValidIndianPhone = (phone) => /^[6-9]\d{9}$/.test(phone.trim());
+  const isValidEmail = (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+
+  // Handle GPS Location Detection
+  const handleDetectGpsLocation = () => {
+    if (!navigator.geolocation) {
+      setErrorMsg('Geolocation is not supported by your browser or device.');
+      return;
+    }
+
+    setIsGpsLocating(true);
+    setErrorMsg(null);
+    setGpsLocationMsg('📍 Locking GPS coordinates & finding street address...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`, {
+            headers: { 'Accept-Language': 'en' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const street = addr.road || addr.suburb || addr.neighbourhood || addr.residential || 'GPS Detected Location';
+            const city = addr.city || addr.town || addr.state_district || 'Noida';
+            const state = addr.state || 'UP';
+            const postcode = addr.postcode ? ` - ${addr.postcode}` : '';
+            const formatted = `${street}, ${city}, ${state}${postcode}`;
+
+            setSignupAddress(formatted);
+            if (setUserAddress) setUserAddress(formatted);
+            setGpsLocationMsg(`📍 Locked: ${formatted}`);
+            setSuccessMsg(`✓ GPS Delivery Address Locked: ${formatted}`);
+          } else {
+            const fallback = `GPS Coordinates (${latitude.toFixed(4)}, ${longitude.toFixed(4)}), Sector 62, Noida, UP`;
+            setSignupAddress(fallback);
+            if (setUserAddress) setUserAddress(fallback);
+            setGpsLocationMsg(`📍 Locked: ${fallback}`);
+          }
+        } catch (err) {
+          const fallback = `GPS (${latitude.toFixed(4)}, ${longitude.toFixed(4)}), Sector 62, Noida, UP`;
+          setSignupAddress(fallback);
+          if (setUserAddress) setUserAddress(fallback);
+          setGpsLocationMsg(`📍 Locked: ${fallback}`);
+        } finally {
+          setIsGpsLocating(false);
+        }
+      },
+      (err) => {
+        setIsGpsLocating(false);
+        setGpsLocationMsg(null);
+        let msg = 'Unable to detect location. Please type your address manually.';
+        if (err.code === err.PERMISSION_DENIED) {
+          msg = 'Location permission denied. Please allow location access in your device settings.';
+        }
+        setErrorMsg(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   // Quick Demo Customer Profiles
   const demoCustomers = [
     {
       name: 'Akarshan Mishra',
-      phone: '+91 9876543210',
+      phone: '9876543210',
       email: 'akarshan@kiranastore.com',
       address: 'Flat 402, Block B, Sector 62, Noida, UP',
       tag: '👑 Regular VIP Customer'
     },
     {
       name: 'Priya Sharma',
-      phone: '+91 9811223344',
+      phone: '9811223344',
       email: 'priya.sharma@gmail.com',
       address: 'Tower 4, Flat 12B, Indirapuram, Ghaziabad, UP',
       tag: '✨ Monthly Rashan Member'
     },
     {
       name: 'Rohan Verma',
-      phone: '+91 9822334455',
+      phone: '9822334455',
       email: 'rohan.verma@outlook.com',
       address: 'House 88, Sector 18 Market Road, Noida, UP',
       tag: '⚡ 10-Min Fast Buyer'
@@ -56,7 +123,7 @@ export default function CustomerAuthPage({
     setErrorMsg(null);
     const userData = {
       name: profile.name,
-      phone: profile.phone,
+      phone: `+91 ${profile.phone}`,
       email: profile.email,
       address: profile.address
     };
@@ -67,7 +134,7 @@ export default function CustomerAuthPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: profile.name,
-          phone: profile.phone,
+          phone: `+91 ${profile.phone}`,
           email: profile.email,
           address: profile.address,
           wallet_balance: 100.0
@@ -87,8 +154,8 @@ export default function CustomerAuthPage({
 
   const handleLoginPhoneSubmit = (e) => {
     e.preventDefault();
-    if (!loginPhone || loginPhone.length < 10) {
-      setErrorMsg('Please enter a valid 10-digit mobile number');
+    if (!isValidIndianPhone(loginPhone)) {
+      setErrorMsg('Please enter a valid 10-digit Indian mobile number (e.g. 9876543210 starting with 6, 7, 8, or 9)');
       return;
     }
     setErrorMsg(null);
@@ -97,7 +164,7 @@ export default function CustomerAuthPage({
       setIsLoading(false);
       setLoginStep('otp');
       setSuccessMsg(`OTP sent to +91 ${loginPhone}. Use test code 1207.`);
-    }, 500);
+    }, 400);
   };
 
   const handleVerifyLoginOtp = async (e) => {
@@ -110,11 +177,12 @@ export default function CustomerAuthPage({
     setErrorMsg(null);
 
     const userNameDerived = loginPhone === '9876543210' ? 'Akarshan Mishra' : `Customer (${loginPhone.slice(-4)})`;
+    const resolvedAddress = signupAddress.trim() || 'Flat 402, Block B, Sector 62, Noida, UP';
     const userData = {
       name: userNameDerived,
       phone: `+91 ${loginPhone}`,
       email: `${loginPhone}@kiranastore.com`,
-      address: 'Flat 402, Block B, Sector 62, Noida, UP'
+      address: resolvedAddress
     };
 
     try {
@@ -125,7 +193,7 @@ export default function CustomerAuthPage({
           name: userNameDerived,
           phone: `+91 ${loginPhone}`,
           email: `${loginPhone}@kiranastore.com`,
-          address: 'Flat 402, Block B, Sector 62, Noida, UP',
+          address: resolvedAddress,
           wallet_balance: 100.0
         })
       });
@@ -134,22 +202,27 @@ export default function CustomerAuthPage({
     }
 
     localStorage.setItem('kirana_customer_user', JSON.stringify(userData));
+    if (setUserAddress) setUserAddress(resolvedAddress);
     setIsLoading(false);
     if (onLoginSuccess) onLoginSuccess(userData);
   };
 
   const handleSignupDetailsSubmit = (e) => {
     e.preventDefault();
-    if (!signupName.trim()) {
-      setErrorMsg('Please enter your full name');
+    if (!signupName.trim() || signupName.trim().length < 2) {
+      setErrorMsg('Please enter your full name (at least 2 characters)');
       return;
     }
-    if (!signupPhone || signupPhone.length < 10) {
-      setErrorMsg('Please enter a valid 10-digit mobile number');
+    if (!isValidIndianPhone(signupPhone)) {
+      setErrorMsg('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9');
       return;
     }
-    if (!signupAddress.trim()) {
-      setErrorMsg('Please enter your delivery street/house address');
+    if (signupEmail.trim() && !isValidEmail(signupEmail.trim())) {
+      setErrorMsg('Please enter a valid email address (e.g. name@example.com)');
+      return;
+    }
+    if (!signupAddress.trim() || signupAddress.trim().length < 4) {
+      setErrorMsg('Please enter your complete delivery street/house address or tap "Auto-Detect GPS"');
       return;
     }
 
@@ -159,7 +232,7 @@ export default function CustomerAuthPage({
       setIsLoading(false);
       setSignupStep('otp');
       setSuccessMsg(`Verification code sent to +91 ${signupPhone}. Use test code 1207.`);
-    }, 500);
+    }, 400);
   };
 
   const handleVerifySignupOtp = async (e) => {
@@ -470,11 +543,31 @@ export default function CustomerAuthPage({
                     />
                   </div>
 
-                  {/* Delivery Address */}
+                  {/* Delivery Address with GPS Auto-Detection */}
                   <div>
-                    <label className="block text-gray-700 dark:text-slate-300 font-bold mb-1">
-                      Delivery Address (Flat / House & Sector)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-gray-700 dark:text-slate-300 font-bold">
+                        Delivery Address
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleDetectGpsLocation}
+                        disabled={isGpsLocating}
+                        className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 px-2.5 py-1 rounded-xl transition cursor-pointer border border-emerald-300 dark:border-emerald-700 shadow-xs"
+                      >
+                        {isGpsLocating ? (
+                          <>
+                            <Loader2 size={12} className="animate-spin text-emerald-600" />
+                            <span>Locating GPS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Crosshair size={12} className="text-emerald-600" />
+                            <span>📍 Auto-Detect GPS</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <input
                       type="text"
                       required
@@ -483,6 +576,12 @@ export default function CustomerAuthPage({
                       placeholder="e.g. Flat 402, Block B, Sector 62, Noida"
                       className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:border-emerald-500"
                     />
+                    {gpsLocationMsg && (
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-1 flex items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        {gpsLocationMsg}
+                      </span>
+                    )}
                   </div>
 
                   {/* Welcome Bonus Callout */}

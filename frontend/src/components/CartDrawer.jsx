@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Plus, Minus, MapPin, Tag, Heart, ArrowRight, ShieldCheck, Sparkles, BellOff, DoorOpen, Calendar, Clock, Wallet, Gift, CreditCard, Navigation, Edit2, Check, CheckCircle2, ChevronRight, ShoppingBag, Loader2 } from 'lucide-react';
 import RazorpayModal from './RazorpayModal';
 import { fetchApi } from '../apiClient';
-import { showToast } from './Toast';
 
 export default function CartDrawer({
   isOpen,

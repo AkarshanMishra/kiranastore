@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Star, Calendar, Shield, Plus, Minus, Heart, Sparkles, CheckCircle2, Store, MessageSquare, Send } from 'lucide-react';
-import { showToast } from './Toast';
 
 export default function ProductDetailModal({
   product,
@@ -15,6 +14,7 @@ export default function ProductDetailModal({
   const [activeSubTab, setActiveSubTab] = useState('details'); // 'details' | 'nutrition' | 'reviews' | 'frequently_bought'
   const [userRating, setUserRating] = useState(5);
   const [userComment, setUserComment] = useState('');
+  const [reviewNotice, setReviewNotice] = useState(null);
   const [reviewsList, setReviewsList] = useState([
     { name: 'Akarshan M.', rating: 5, date: '2 days ago', comment: 'Always fresh and delivered in perfect chilled packaging!' },
     { name: 'Priya S.', rating: 5, date: '1 week ago', comment: 'Top grocery quality. Sealed and genuine product.' }
@@ -52,7 +52,8 @@ export default function ProductDetailModal({
       ...reviewsList
     ]);
     setUserComment('');
-    showToast("Thank you! Your review has been submitted.", "success");
+    setReviewNotice('✓ Review submitted successfully');
+    setTimeout(() => setReviewNotice(null), 3000);
   };
 
   return (
@@ -228,6 +229,11 @@ export default function ProductDetailModal({
                     <Send size={12} /> Post
                   </button>
                 </div>
+                {reviewNotice && (
+                  <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-black mt-1.5 flex items-center gap-1">
+                    <CheckCircle2 size={13} /> {reviewNotice}
+                  </div>
+                )}
               </form>
             </div>
           )}

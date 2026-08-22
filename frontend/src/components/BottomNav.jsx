@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LayoutGrid, Search, ShoppingBag, User, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Home, LayoutGrid, Tag, ShoppingBag, User, ArrowRight, ShoppingCart } from 'lucide-react';
 
 export default function BottomNav({
   activeTab,
@@ -12,7 +12,7 @@ export default function BottomNav({
   const navItems = [
     { id: 'store', label: 'Home', icon: Home },
     { id: 'categories', label: 'Categories', icon: LayoutGrid },
-    { id: 'search', label: 'Search', icon: Search },
+    { id: 'offers', label: 'Offers', icon: Tag },
     { id: 'my_orders', label: 'Orders', icon: ShoppingBag, badge: orderCount },
     { id: 'profile', label: 'Profile', icon: User }
   ];

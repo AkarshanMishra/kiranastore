@@ -362,7 +362,6 @@ export default function MonthlyRashanSection({
           weight_unit: 'Monthly Pack Item'
         });
       });
-      alert(`🛒 ${pack.name} added to your cart! Payment Method: ${paymentMethod}`);
       setIsModalOpen(false);
     }
   };
@@ -370,7 +369,8 @@ export default function MonthlyRashanSection({
   const handleAddCustomListToCart = () => {
     const selectedList = customItems.filter(item => item.selected && item.qty > 0);
     if (selectedList.length === 0) {
-      alert("Please select at least 1 item for your monthly list.");
+      setRecentlyAddedNotice("Please select at least 1 item for your monthly list.");
+      setTimeout(() => setRecentlyAddedNotice(null), 3000);
       return;
     }
 
@@ -387,7 +387,6 @@ export default function MonthlyRashanSection({
           });
         }
       });
-      alert(`🎉 Added ${selectedList.length} monthly items to your basket! Payment: ${paymentMethod}`);
       setIsModalOpen(false);
     }
   };
