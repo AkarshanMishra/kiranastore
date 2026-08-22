@@ -1,8 +1,3 @@
-# Root-level requirements file for Render / Railway deployments.
-# Installs the same dependencies as backend/requirements.txt so that a
-# Render Web Service set with root directory = repo root (or unset) works.
-# If you set Render "Root Directory" = backend, this file is ignored and
-# backend/requirements.txt is used instead.
 fastapi>=0.100.0
 uvicorn>=0.22.0
 sqlalchemy>=2.0.0

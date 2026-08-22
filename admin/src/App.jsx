@@ -54,6 +54,7 @@ export default function App() {
   }, [activeView]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDarkStore, setActiveDarkStore] = useState('NOIDA_402');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
@@ -323,16 +324,18 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex font-sans selection:bg-purple-600 selection:text-white">
-      {/* Sidebar Navigation */}
+      {/* Sidebar Navigation (Desktop Persistent + Mobile Drawer) */}
       <AdminSidebar
         activeView={activeView}
         setActiveView={setActiveView}
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
       />
 
       {/* Main Workspace */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <AdminNavbar
           activeDarkStore={activeDarkStore}
           setActiveDarkStore={setActiveDarkStore}
@@ -340,10 +343,13 @@ export default function App() {
           isRefreshing={isRefreshing}
           adminUser={adminUser}
           onLogout={handleLogout}
+          onToggleMobileSidebar={() => setIsMobileOpen(prev => !prev)}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto">
-          {renderActiveView()}
+        <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto w-full min-w-0">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {renderActiveView()}
+          </div>
         </main>
       </div>
 

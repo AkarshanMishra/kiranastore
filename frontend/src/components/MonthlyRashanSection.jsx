@@ -506,15 +506,15 @@ export default function MonthlyRashanSection({
             </p>
           </div>
 
-          {/* Quick Active Hub Indicator Pill */}
+          {/* Quick Doorstep Service Indicator Pill */}
           <div 
             onClick={() => handleOpenModal('photo')}
             className="cursor-pointer bg-black/30 hover:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-emerald-400/30 flex items-center gap-2 text-xs self-start md:self-auto transition"
           >
             <Store size={14} className="text-emerald-300 flex-shrink-0" />
             <div className="text-left">
-              <span className="text-[9px] text-emerald-200 block font-bold leading-none">FULFILLMENT HUB</span>
-              <span className="font-extrabold text-white truncate max-w-[150px] block leading-tight">{selectedHub.name}</span>
+              <span className="text-[9px] text-emerald-200 block font-bold leading-none">DOORSTEP DELIVERY</span>
+              <span className="font-extrabold text-white truncate max-w-[150px] block leading-tight">Express Kirana Service</span>
             </div>
           </div>
         </div>
@@ -815,17 +815,17 @@ export default function MonthlyRashanSection({
                         {language === 'HI' ? 'राशन पर्ची सफलतापूर्वक प्राप्त हुई!' : 'Rashan Slip Order Placed Successfully!'}
                       </h4>
                       <p className="text-xs text-gray-600 dark:text-slate-400 max-w-md mx-auto font-medium">
-                        Order <strong className="text-purple-600">#{placedOrderNumber}</strong> dispatched to <strong>{selectedHub.name}</strong> for packing.
+                        Order <strong className="text-purple-600">#{placedOrderNumber}</strong> received! Our store team is packing your items.
                       </p>
 
                       <div className="bg-emerald-50 dark:bg-emerald-950/60 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 max-w-md mx-auto text-left text-xs space-y-1.5 mt-2">
                         <div className="flex justify-between font-bold text-emerald-900 dark:text-emerald-300">
                           <span>Order Status:</span>
-                          <span className="bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded">⚡ Processing at Dark Store</span>
+                          <span className="bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded">⚡ Processing Order</span>
                         </div>
                         <div className="flex justify-between text-gray-600 dark:text-slate-300">
-                          <span>Fulfillment Hub:</span>
-                          <span className="font-bold text-gray-900 dark:text-white">{selectedHub.name} ({selectedHub.distance})</span>
+                          <span>Fulfillment Service:</span>
+                          <span className="font-bold text-gray-900 dark:text-white">Kirana Express Doorstep</span>
                         </div>
                         <div className="flex justify-between text-gray-600 dark:text-slate-300">
                           <span>Delivery Address:</span>
@@ -920,7 +920,7 @@ export default function MonthlyRashanSection({
                           }`}
                         >
                           <span className="block font-black text-gray-900 dark:text-white">⚡ Same Day Express</span>
-                          <span className="text-[10px] text-gray-500">From {selectedHub.name}</span>
+                          <span className="text-[10px] text-gray-500">Delivered within 2 hours</span>
                         </button>
 
                         <button
@@ -993,7 +993,7 @@ export default function MonthlyRashanSection({
                             className="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[11px] py-2 rounded-xl transition flex items-center justify-center gap-1 shadow-xs"
                           >
                             <ShoppingBag size={13} />
-                            <span>Add Pack via {selectedHub.name.split(' ')[0]}</span>
+                            <span>Add Complete Pack to Cart</span>
                           </button>
                         </div>
                       ))}

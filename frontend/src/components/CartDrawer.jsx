@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Trash2, Plus, Minus, MapPin, Tag, Heart, ArrowRight, ShieldCheck, Sparkles, BellOff, DoorOpen, Calendar, Clock, Wallet, Gift, CreditCard, Navigation, Edit2, Check, CheckCircle2, ChevronRight, ShoppingBag, Loader2 } from 'lucide-react';
 import RazorpayModal from './RazorpayModal';
 import { fetchApi } from '../apiClient';
+import { showToast } from './Toast';
 
 export default function CartDrawer({
   isOpen,
@@ -15,6 +16,16 @@ export default function CartDrawer({
   user,
   onPlaceOrder
 }) {
+  // Lock background body scroll when Cart Drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isOpen]);
   const [tipAmount, setTipAmount] = useState(0);
   const [couponCode, setCouponCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Star, Calendar, Shield, Plus, Minus, Heart, Sparkles, CheckCircle2, Store, MessageSquare, Send } from 'lucide-react';
+import { showToast } from './Toast';
 
 export default function ProductDetailModal({
   product,
@@ -18,6 +19,17 @@ export default function ProductDetailModal({
     { name: 'Akarshan M.', rating: 5, date: '2 days ago', comment: 'Always fresh and delivered in perfect chilled packaging!' },
     { name: 'Priya S.', rating: 5, date: '1 week ago', comment: 'Top grocery quality. Sealed and genuine product.' }
   ]);
+
+  // Lock background body scroll when modal is open
+  useEffect(() => {
+    if (product) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [product]);
 
   if (!product) return null;
 
@@ -40,12 +52,17 @@ export default function ProductDetailModal({
       ...reviewsList
     ]);
     setUserComment('');
-    alert("Thank you! Your review has been submitted for moderation.");
+    showToast("Thank you! Your review has been submitted.", "success");
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 dark:text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+    <div 
+      className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4 overscroll-contain"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white dark:bg-slate-900 dark:text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh] overscroll-contain">
         
         {/* Top Header Buttons */}
         <div className="absolute right-4 top-4 z-20 flex items-center gap-2">

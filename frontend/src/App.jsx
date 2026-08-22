@@ -25,9 +25,13 @@ import MonthlyRashanSection from './components/MonthlyRashanSection';
 import { X, Heart, Bot } from 'lucide-react';
 import { defaultCategories, defaultProducts } from './data/catalog';
 import { fetchApi } from './apiClient';
+import { App as CapacitorApp } from '@capacitor/app';
+import { ToastContainer, showToast } from './components/Toast';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(false);
+  const [exitToast, setExitToast] = useState(false);
+  const lastBackPressRef = React.useRef(0);
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('kirana_customer_user');
@@ -45,6 +49,7 @@ export default function App() {
   const handleCustomerLogout = () => {
     localStorage.removeItem('kirana_customer_user');
     setUser(null);
+    showToast('Logged out successfully.', 'info');
   };
 
   const [categories, setCategories] = useState(defaultCategories);
@@ -83,6 +88,118 @@ export default function App() {
   const [sortBy, setSortBy] = useState('popular');
   const [filterDiscountedOnly, setFilterDiscountedOnly] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState('');
+
+  // Keep fresh reference for native/web back navigation
+  const navStateRef = React.useRef({});
+  navStateRef.current = {
+    selectedProduct,
+    isCartOpen,
+    isWishlistOpen,
+    isAuthOpen,
+    isAiOpen,
+    isSupportOpen,
+    isNotificationsOpen,
+    isBarcodeOpen,
+    searchQuery,
+    selectedCategoryId,
+    activeTab
+  };
+
+  const handleGoBack = useCallback(() => {
+    const s = navStateRef.current;
+    
+    // 1. Close open full-screen modals & drawers first
+    if (s.selectedProduct) {
+      setSelectedProduct(null);
+      return true;
+    }
+    if (s.isCartOpen) {
+      setIsCartOpen(false);
+      return true;
+    }
+    if (s.isWishlistOpen) {
+      setIsWishlistOpen(false);
+      return true;
+    }
+    if (s.isAuthOpen) {
+      setIsAuthOpen(false);
+      return true;
+    }
+    if (s.isAiOpen) {
+      setIsAiOpen(false);
+      return true;
+    }
+    if (s.isSupportOpen) {
+      setIsSupportOpen(false);
+      return true;
+    }
+    if (s.isNotificationsOpen) {
+      setIsNotificationsOpen(false);
+      return true;
+    }
+    if (s.isBarcodeOpen) {
+      setIsBarcodeOpen(false);
+      return true;
+    }
+
+    // 2. Clear Active Search or Category Filter
+    if (s.searchQuery && s.searchQuery.trim() !== '') {
+      setSearchQuery('');
+      return true;
+    }
+    if (s.selectedCategoryId !== null) {
+      setSelectedCategoryId(null);
+      return true;
+    }
+
+    // 3. Switch back to Home / Store tab if on another tab
+    if (s.activeTab !== 'store') {
+      setActiveTab('store');
+      return true;
+    }
+
+    // 4. Double back to exit when already on Home
+    const now = Date.now();
+    if (now - lastBackPressRef.current < 2000) {
+      try {
+        CapacitorApp.exitApp();
+      } catch {}
+    } else {
+      lastBackPressRef.current = now;
+      setExitToast(true);
+      setTimeout(() => setExitToast(false), 2000);
+    }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    let listener = null;
+    try {
+      CapacitorApp.addListener('backButton', () => {
+        handleGoBack();
+      }).then(l => {
+        listener = l;
+      });
+    } catch {}
+
+    const handlePopState = (e) => {
+      e.preventDefault();
+      handleGoBack();
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      if (listener && listener.remove) listener.remove();
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [handleGoBack]);
+
+  // Override native alert to show modern toast box
+  useEffect(() => {
+    window.alert = (msg) => {
+      showToast(String(msg), 'info', 3500);
+    };
+  }, []);
 
   // Fetch Categories
   const loadCategories = () => {
@@ -146,8 +263,10 @@ export default function App() {
       const next = { ...prev };
       if (next[product.id]) {
         delete next[product.id];
+        showToast(`Removed from saved items`, 'info', 2000);
       } else {
         next[product.id] = product;
+        showToast(`❤️ Saved "${product.name}" to Wishlist!`, 'success', 2500);
       }
       return next;
     });
@@ -158,6 +277,7 @@ export default function App() {
     setCart((prev) => {
       const existing = prev[product.id];
       const qty = existing ? existing.quantity + 1 : 1;
+      showToast(`🛒 Added "${product.name}" to Cart (${qty})`, 'cart', 2200);
       return {
         ...prev,
         [product.id]: {
@@ -173,6 +293,7 @@ export default function App() {
       const existing = prev[productId];
       if (!existing) return prev;
       if (existing.quantity === 1) {
+        showToast(`Removed item from Cart`, 'info', 1800);
         const next = { ...prev };
         delete next[productId];
         return next;
@@ -240,6 +361,24 @@ export default function App() {
 
   if (showSplash) {
     return <SplashScreen onFinish={handleSplashFinish} />;
+  }
+
+  // When customer is logged out, ONLY display the login / signup screen
+  if (!user) {
+    return (
+      <div className={`${darkMode ? 'dark bg-slate-900 text-white' : 'bg-gray-50 text-gray-900'} min-h-screen font-sans`}>
+        <CustomerAuthPage
+          onLoginSuccess={(u) => {
+            setUser(u);
+            if (u.address) setUserAddress(u.address);
+            showToast(`Welcome back, ${u.name}! 👋`, 'success');
+          }}
+          onBackToStore={null}
+          setUserAddress={setUserAddress}
+        />
+        <ToastContainer />
+      </div>
+    );
   }
 
   return (
@@ -528,6 +667,16 @@ export default function App() {
         user={user}
         onPlaceOrder={handleOrderPlaced}
       />
+
+      {/* Floating Exit Toast for Double Back Press */}
+      {exitToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-950/90 backdrop-blur-md text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl z-50 animate-in fade-in zoom-in duration-150 flex items-center gap-2 border border-gray-700/80">
+          <span>Press back again to exit</span>
+        </div>
+      )}
+
+      {/* Global Animated Toast Notification System */}
+      <ToastContainer />
     </div>
   );
 }
