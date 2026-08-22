@@ -20,6 +20,9 @@ export default function ProductDetailModal({
     { name: 'Priya S.', rating: 5, date: '1 week ago', comment: 'Top grocery quality. Sealed and genuine product.' }
   ]);
 
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
   // Lock background body scroll when modal is open
   useEffect(() => {
     if (product) {
@@ -55,9 +58,6 @@ export default function ProductDetailModal({
     setReviewNotice('✓ Review submitted successfully');
     setTimeout(() => setReviewNotice(null), 3000);
   };
-
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
 
   const handleTouchStart = (e) => {
     setTouchEnd(null);
