@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, HelpCircle, Phone, MessageSquare, ChevronDown, Check, ShieldAlert, Send, FileText, CheckCircle2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, HelpCircle, Phone, MessageSquare, ChevronDown, Check, ShieldAlert, Send, FileText, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { fetchApi } from '../apiClient';
 
 export default function CustomerSupportModal({ isOpen, onClose }) {
@@ -13,8 +13,67 @@ export default function CustomerSupportModal({ isOpen, onClose }) {
 
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
-    { sender: 'support', text: 'Hello! Welcome to KiranaStore Support. How can we assist you today?', time: 'Just now' }
+    { sender: 'support', text: 'Hello! Welcome to KiranaStore Live Support. How can we assist you today?', time: 'Just now' }
   ]);
+  const [isSendingChat, setIsSendingChat] = useState(false);
+  const chatEndRef = useRef(null);
+
+  const getUserPhone = () => {
+    try {
+      const saved = localStorage.getItem('kirana_customer_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        return u.phone || '+91 9876543210';
+      }
+    } catch {}
+    return '+91 9876543210';
+  };
+
+  const getUserName = () => {
+    try {
+      const saved = localStorage.getItem('kirana_customer_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        return u.name || 'Customer';
+      }
+    } catch {}
+    return 'Customer';
+  };
+
+  // Poll for live chat updates
+  const fetchLiveChat = async () => {
+    const phone = getUserPhone();
+    try {
+      const res = await fetchApi(`/api/support/chat?phone=${encodeURIComponent(phone)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(m => ({
+            sender: m.sender,
+            text: m.text,
+            time: new Date(m.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setChatMessages(mapped);
+        }
+      }
+    } catch (e) {
+      console.warn('Chat fetch error:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && activeTab === 'chat') {
+      fetchLiveChat();
+      const interval = setInterval(fetchLiveChat, 2500);
+      return () => clearInterval(interval);
+    }
+  }, [isOpen, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, activeTab]);
 
   if (!isOpen) return null;
 
@@ -42,16 +101,8 @@ export default function CustomerSupportModal({ isOpen, onClose }) {
     if (!ticketMessage.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    let customerName = 'Customer';
-    let customerPhone = '+91 9876543210';
-    try {
-      const saved = localStorage.getItem('kirana_customer_user');
-      if (saved) {
-        const u = JSON.parse(saved);
-        customerName = u.name || 'Customer';
-        customerPhone = u.phone || '+91 9876543210';
-      }
-    } catch {}
+    const customerName = getUserName();
+    const customerPhone = getUserPhone();
 
     try {
       const res = await fetchApi('/api/support/tickets', {
@@ -69,7 +120,7 @@ export default function CustomerSupportModal({ isOpen, onClose }) {
 
       if (res.ok) {
         const data = await res.json();
-        setSuccessInfo(`Ticket #${data.ticket_id} created successfully & assigned to Store Manager!`);
+        setSuccessInfo(`Ticket #${data.ticket_id} created & sent to Store Manager dashboard!`);
       } else {
         setSuccessInfo(`Ticket created & forwarded to Store Support.`);
       }
@@ -87,19 +138,36 @@ export default function CustomerSupportModal({ isOpen, onClose }) {
     }
   };
 
-  const handleSendChatMessage = (e) => {
+  const handleSendChatMessage = async (e) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-    const newMsg = { sender: 'user', text: chatInput.trim(), time: 'Just now' };
-    setChatMessages([...chatMessages, newMsg]);
-    setChatInput('');
+    if (!chatInput.trim() || isSendingChat) return;
 
-    setTimeout(() => {
-      setChatMessages(prev => [
-        ...prev,
-        { sender: 'support', text: 'Thanks for reaching out. A store support executive is reviewing your request.', time: 'Just now' }
-      ]);
-    }, 1000);
+    const textToSend = chatInput.trim();
+    const customerName = getUserName();
+    const customerPhone = getUserPhone();
+
+    const localMsg = { sender: 'user', text: textToSend, time: 'Just now' };
+    setChatMessages(prev => [...prev, localMsg]);
+    setChatInput('');
+    setIsSendingChat(true);
+
+    try {
+      await fetchApi('/api/support/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: customerPhone,
+          customer_name: customerName,
+          sender: 'customer',
+          text: textToSend
+        })
+      });
+      fetchLiveChat();
+    } catch (err) {
+      console.warn('Could not send live chat msg:', err);
+    } finally {
+      setIsSendingChat(false);
+    }
   };
 
   return (

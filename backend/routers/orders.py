@@ -280,3 +280,31 @@ async def create_support_ticket(payload: SupportTicketCreateSchema, db: Session 
     db.refresh(ticket)
     return ticket
 
+from models import ChatMessage
+from schemas import ChatMessageCreateSchema, ChatMessageSchema
+
+@router.get("/support/chat", response_model=List[ChatMessageSchema])
+def get_chat_messages(phone: Optional[str] = None, ticket_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(ChatMessage)
+    if ticket_id:
+        query = query.filter(ChatMessage.ticket_id == ticket_id)
+    elif phone:
+        clean = phone.replace("+91", "").replace(" ", "").strip()
+        query = query.filter(ChatMessage.phone.like(f"%{clean}%"))
+    return query.order_by(ChatMessage.created_at.asc()).all()
+
+@router.post("/support/chat", response_model=ChatMessageSchema)
+def send_chat_message(payload: ChatMessageCreateSchema, db: Session = Depends(get_db)):
+    clean_p = payload.phone.replace("+91", "").replace(" ", "").strip() if payload.phone else "9876543210"
+    msg = ChatMessage(
+        ticket_id=payload.ticket_id or f"LIVE-{clean_p[-10:]}",
+        phone=payload.phone or "+91 9876543210",
+        customer_name=payload.customer_name or "Customer",
+        sender=payload.sender,
+        text=payload.text
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
+

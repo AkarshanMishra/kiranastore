@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Star, CheckCircle2, XCircle, Trash2, Heart, Search, Filter, ShieldCheck, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, CheckCircle2, XCircle, Trash2, Heart, Search, Filter, ShieldCheck, MessageSquare, RefreshCw } from 'lucide-react';
 
 export default function ReviewsView() {
   const [activeTab, setActiveTab] = useState('reviews'); // 'reviews' | 'wishlist'
@@ -23,26 +23,28 @@ export default function ReviewsView() {
       comment: 'Very soft and tasty paneer. Exactly like farm dairy.',
       date: '19 Aug 2026',
       status: 'APPROVED'
-    },
-    {
-      id: 3,
-      customer: 'Vikram Mehta',
-      product: 'Aashirvaad Chakki Atta (5 kg)',
-      rating: 4,
-      comment: 'Good packaging and intact seal. Scheduled delivery arrived right on time.',
-      date: '18 Aug 2026',
-      status: 'PENDING'
-    },
-    {
-      id: 4,
-      customer: 'Rohan Gupta',
-      product: 'Lay\'s Magic Masala (50 g)',
-      rating: 2,
-      comment: 'Packet was slightly crushed in transit.',
-      date: '17 Aug 2026',
-      status: 'PENDING'
     }
   ]);
+
+  const loadReviews = async () => {
+    try {
+      const res = await fetch('/api/admin/reviews');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setReviews(data);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch reviews:', e);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
+    const interval = setInterval(loadReviews, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [mostWishedProducts] = useState([
     { id: 1, name: 'Amul Desi Ghee (1 L)', count: 184, price: 589, inStock: true },

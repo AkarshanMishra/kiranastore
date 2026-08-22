@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from database import get_db
 from models import Order, Product, OrderItem, Customer
 from schemas import (
@@ -222,8 +222,8 @@ def update_product_stock(
     db.refresh(product)
     return product
 
-from models import SupportTicket, Notification
-from schemas import SupportTicketSchema, NotificationCreateSchema, NotificationSchema
+from models import SupportTicket, Notification, ChatMessage
+from schemas import SupportTicketSchema, NotificationCreateSchema, NotificationSchema, ChatMessageCreateSchema, ChatMessageSchema
 
 @router.get("/support/tickets", response_model=List[SupportTicketSchema])
 def get_all_support_tickets(db: Session = Depends(get_db)):
@@ -239,6 +239,27 @@ def update_support_ticket(ticket_id: str, payload: dict, db: Session = Depends(g
     db.commit()
     db.refresh(ticket)
     return ticket
+
+@router.get("/support/chats", response_model=List[ChatMessageSchema])
+def get_all_support_chats(ticket_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(ChatMessage)
+    if ticket_id:
+        query = query.filter(ChatMessage.ticket_id == ticket_id)
+    return query.order_by(ChatMessage.created_at.asc()).all()
+
+@router.post("/support/chat", response_model=ChatMessageSchema)
+def reply_support_chat(payload: ChatMessageCreateSchema, db: Session = Depends(get_db)):
+    msg = ChatMessage(
+        ticket_id=payload.ticket_id or "LIVE-SUPPORT",
+        phone=payload.phone,
+        customer_name="Store Support Executive",
+        sender="support",
+        text=payload.text
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
 
 @router.get("/notifications", response_model=List[NotificationSchema])
 def get_admin_notifications(db: Session = Depends(get_db)):
@@ -257,3 +278,22 @@ def broadcast_notification(payload: NotificationCreateSchema, db: Session = Depe
     db.commit()
     db.refresh(notif)
     return notif
+
+@router.get("/reviews")
+def get_all_reviews(db: Session = Depends(get_db)):
+    rated_orders = db.query(Order).filter(Order.rating.isnot(None)).order_by(Order.created_at.desc()).all()
+    results = []
+    for ord in rated_orders:
+        first_item_name = ord.items[0].product_name if ord.items else "Grocery Basket"
+        results.append({
+            "id": ord.id,
+            "order_number": ord.order_number,
+            "customer": ord.user_name,
+            "phone": ord.phone,
+            "product": first_item_name,
+            "rating": ord.rating,
+            "comment": ord.rating_comment or "Great delivery service and fresh items!",
+            "date": ord.created_at.strftime("%d %b %Y"),
+            "status": "APPROVED"
+        })
+    return results

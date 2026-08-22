@@ -116,3 +116,14 @@ class Notification(Base):
     time = Column(String, default="Just now")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_id = Column(String, index=True, nullable=True) # e.g. "TICK-402" or customer phone
+    phone = Column(String, nullable=True, index=True)
+    customer_name = Column(String, nullable=True)
+    sender = Column(String, nullable=False) # "customer" or "support"
+    text = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

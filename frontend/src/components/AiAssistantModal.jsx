@@ -317,7 +317,58 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
         return;
       }
 
-      // 5. Recipe Matching
+      // 5. Coupons & Deals Intent
+      if (queryLower.includes('coupon') || queryLower.includes('offer') || queryLower.includes('promo') || queryLower.includes('discount code')) {
+        reply = `🏷️ Here are currently active high-value coupon codes:
+• WELCOME100 — Flat ₹100 OFF on orders above ₹499
+• ZEPTO20 — 20% OFF (Up to ₹80) on snacks & dairy
+• FREESHIP — Zero Delivery Fee on your order
+You can apply them directly in your Checkout drawer!`;
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 6. Wallet & KiranaMoney Intent
+      if (queryLower.includes('wallet') || queryLower.includes('balance') || queryLower.includes('cashback') || queryLower.includes('kiranamoney')) {
+        reply = `💰 KiranaMoney Wallet Balance: ₹100.00 Active Credits.
+• 100% usable on all grocery orders with zero restrictions.
+• Instant refunds from cancellations or damaged items credit here immediately.`;
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 7. Store Hours & 10-Minute Delivery Info Intent
+      if (queryLower.includes('timing') || queryLower.includes('open') || queryLower.includes('hours') || queryLower.includes('speed') || queryLower.includes('fast')) {
+        reply = `⚡ KiranaStore 10-Minute Delivery Promise:
+• Operating Hours: 6:00 AM – 11:30 PM (All 365 Days)
+• Order Packaging: 2 Minutes from local Dark Store
+• Delivery Dispatch: 8 Minutes via Dedicated Electric Delivery Fleet!`;
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 8. Help & Human Manager Escalation Intent
+      if (queryLower.includes('human') || queryLower.includes('manager') || queryLower.includes('talk') || queryLower.includes('agent') || queryLower.includes('complaint')) {
+        // Auto create support ticket in background
+        const customerName = 'Customer';
+        fetch('/api/support/tickets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: customerName,
+            phone: '+91 9876543210',
+            category: 'Live Bot Escalation',
+            subject: `Kira AI Escalation: ${query.slice(0, 35)}`,
+            message: `Customer requested live assistance via Kira AI: "${query}"`
+          })
+        }).catch(() => {});
+
+        reply = `👨‍💼 I have alerted the Store Support Team and forwarded your message to the Store Manager dashboard. You can also open the "Help & Support" live chat tab anytime for 1-on-1 human assistance.`;
+        setMessages(prev => [...prev, { sender: 'bot', text: reply, time: 'Just now' }]);
+        return;
+      }
+
+      // 9. Recipe Matching
       const matchedRecipe = popularRecipes.find(r => queryLower.includes(r.name.toLowerCase()) || r.keywords.some(k => queryLower.includes(k)));
       if (matchedRecipe) {
         setActiveRecipe(matchedRecipe);

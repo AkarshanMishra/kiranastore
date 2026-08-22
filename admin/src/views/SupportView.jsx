@@ -32,15 +32,30 @@ export default function SupportView() {
   const [tickets, setTickets] = useState(defaultMockTickets);
 
   const loadTickets = async () => {
-    setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/support/tickets');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const formatted = data.map(t => ({
-            id: t.ticket_id || `TICK-${t.id}`,
-            ticket_id: t.ticket_id || `TICK-${t.id}`,
+      const [ticketsRes, chatsRes] = await Promise.all([
+        fetch('/api/admin/support/tickets'),
+        fetch('/api/admin/support/chats')
+      ]);
+
+      let loadedTickets = [];
+      let loadedChats = [];
+
+      if (ticketsRes.ok) {
+        loadedTickets = await ticketsRes.json();
+      }
+      if (chatsRes.ok) {
+        loadedChats = await chatsRes.json();
+      }
+
+      const ticketMap = {};
+
+      if (Array.isArray(loadedTickets)) {
+        loadedTickets.forEach(t => {
+          const tid = t.ticket_id || `TICK-${t.id}`;
+          ticketMap[tid] = {
+            id: tid,
+            ticket_id: tid,
             customer: t.customer_name,
             customer_name: t.customer_name,
             phone: t.phone,
@@ -55,22 +70,58 @@ export default function SupportView() {
             status: t.status || 'OPEN',
             priority: t.priority || 'HIGH',
             date: new Date(t.created_at || Date.now()).toLocaleDateString()
-          }));
-          setTickets(formatted);
-          if (!selectedTicket && formatted.length > 0) {
-            setSelectedTicket(formatted[0]);
+          };
+        });
+      }
+
+      // Group live chat messages
+      if (Array.isArray(loadedChats)) {
+        loadedChats.forEach(c => {
+          const tid = c.ticket_id || (c.phone ? `LIVE-${c.phone.slice(-10)}` : 'LIVE-CHAT');
+          if (!ticketMap[tid]) {
+            ticketMap[tid] = {
+              id: tid,
+              ticket_id: tid,
+              customer: c.customer_name || 'App Customer',
+              customer_name: c.customer_name || 'App Customer',
+              phone: c.phone || 'App Shopper',
+              orderNumber: 'Live Chat',
+              order_number: null,
+              category: 'Live In-App Chat',
+              subject: `Live Chat: ${c.text.slice(0, 30)}...`,
+              message: c.text,
+              messages: [],
+              status: 'OPEN',
+              priority: 'HIGH',
+              date: new Date(c.created_at || Date.now()).toLocaleDateString()
+            };
           }
-        }
+
+          ticketMap[tid].messages.push({
+            sender: c.sender,
+            text: c.text,
+            time: new Date(c.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+        });
+      }
+
+      const allList = Object.values(ticketMap);
+      if (allList.length > 0) {
+        setTickets(allList);
+        setSelectedTicket(prev => {
+          if (!prev) return allList[0];
+          return allList.find(t => t.id === prev.id) || allList[0];
+        });
       }
     } catch (err) {
-      console.warn('Could not fetch support tickets:', err);
-    } finally {
-      setIsLoading(false);
+      console.warn('Could not fetch support data:', err);
     }
   };
 
   useEffect(() => {
     loadTickets();
+    const interval = setInterval(loadTickets, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateStatus = async (ticketId, newStatus) => {
@@ -90,15 +141,32 @@ export default function SupportView() {
   const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim() || !selectedTicket) return;
+    const textToSend = replyText.trim();
+    setReplyText('');
+
     const newMsg = {
       sender: 'support',
-      text: replyText.trim(),
+      text: textToSend,
       time: 'Just now'
     };
     const updatedMessages = [...(selectedTicket.messages || []), newMsg];
     selectedTicket.messages = updatedMessages;
-    setReplyText('');
-    handleUpdateStatus(selectedTicket.id, 'RESOLVED');
+
+    try {
+      await fetch('/api/admin/support/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticket_id: selectedTicket.ticket_id || selectedTicket.id,
+          phone: selectedTicket.phone,
+          sender: 'support',
+          text: textToSend
+        })
+      });
+      loadTickets();
+    } catch (err) {
+      console.warn('Could not send admin reply:', err);
+    }
   };
 
   const filteredTickets = tickets.filter(t =>

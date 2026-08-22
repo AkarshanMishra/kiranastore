@@ -204,3 +204,22 @@ class NotificationSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ChatMessageCreateSchema(BaseModel):
+    phone: Optional[str] = None
+    ticket_id: Optional[str] = None
+    customer_name: Optional[str] = "Customer"
+    sender: str = "customer" # "customer" | "support"
+    text: str
+
+class ChatMessageSchema(BaseModel):
+    id: int
+    ticket_id: Optional[str] = None
+    phone: Optional[str] = None
+    customer_name: Optional[str] = None
+    sender: str
+    text: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
