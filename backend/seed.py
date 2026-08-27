@@ -645,25 +645,50 @@ def _seed_cms_defaults(db):
             db.add(kb)
         print("Seeded default AI Knowledge Base.")
 
-    if db.query(SupportTicket).count() == 0:
-        sample_ticket = SupportTicket(
-            ticket_id="TICK-401",
-            customer_name="Priya Sharma",
-            phone="+91 9811223344",
-            order_number="KS-94820",
-            category="Delivery Slot Change",
-            subject="Please change delivery slot from 4 PM to 6 PM",
-            message="Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?",
-            status="RESOLVED",
-            priority="HIGH"
-        )
-        db.add(sample_ticket)
-        db.commit()
-
-    if db.query(ChatMessage).count() == 0:
-        db.add(ChatMessage(ticket_id="TICK-401", phone="+91 9811223344", customer_name="Priya Sharma", sender="customer", text="Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?"))
-        db.add(ChatMessage(ticket_id="TICK-401", phone="+91 9811223344", customer_name="Store Support Executive", sender="support", text="Hello Priya, we have updated your delivery slot to 6:00 PM - 8:00 PM today."))
-        db.commit()
+    from models import AiKnowledgeBase, SupportTicket, ChatMessage, AiDemandForecastRule
+    if db.query(AiDemandForecastRule).count() == 0:
+        sample_forecast_rules = [
+            AiDemandForecastRule(
+                name="Weekend Dairy & Breakfast Surge",
+                category="Dairy & Breakfast",
+                demand_multiplier=1.85,
+                stockout_threshold_hours=6,
+                auto_restock_enabled=True,
+                status="ACTIVE",
+                notes="Peak demand for fresh milk, paneer, and curd on Saturday & Sunday mornings."
+            ),
+            AiDemandForecastRule(
+                name="Evening Snacks & Cold Drinks Spike",
+                category="Snacks & Munchies",
+                demand_multiplier=2.10,
+                stockout_threshold_hours=4,
+                auto_restock_enabled=True,
+                status="ACTIVE",
+                notes="High demand between 5:00 PM - 9:30 PM for chips, cold drinks, and namkeen."
+            ),
+            AiDemandForecastRule(
+                name="Monsoon Chai & Pakoda Velocity",
+                category="Tea, Coffee & Beverages",
+                demand_multiplier=1.70,
+                stockout_threshold_hours=8,
+                auto_restock_enabled=True,
+                status="ACTIVE",
+                notes="Weather-triggered surge for CTC tea, besan, and mustard oil."
+            ),
+            AiDemandForecastRule(
+                name="Monthly 1st Staples Restock Wave",
+                category="Atta, Rice & Dal",
+                demand_multiplier=1.90,
+                stockout_threshold_hours=12,
+                auto_restock_enabled=True,
+                status="ACTIVE",
+                notes="Household monthly grocery replenishment window (1st to 7th of every month)."
+            )
+        ]
+        for r in sample_forecast_rules:
+            db.add(r)
+        print("Seeded default AI demand forecast rules.")
 
     db.commit()
+
 

@@ -279,3 +279,19 @@ class AiKnowledgeBase(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class AiDemandForecastRule(Base):
+    """Machine learning demand forecasting & auto-replenishment rule multipliers."""
+    __tablename__ = "ai_demand_forecast_rules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False) # e.g. "Weekend Dairy Surge"
+    category = Column(String, default="Dairy & Breakfast") # Category or "ALL"
+    demand_multiplier = Column(Float, default=1.5) # 1.5x surge
+    stockout_threshold_hours = Column(Integer, default=6) # Trigger alert if stock < 6h
+    auto_restock_enabled = Column(Boolean, default=True)
+    status = Column(String, default="ACTIVE") # ACTIVE, PAUSED
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+

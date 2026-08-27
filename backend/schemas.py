@@ -422,3 +422,30 @@ class AiKnowledgeBaseSchema(AiKnowledgeBaseCreateSchema):
         from_attributes = True
 
 
+class AiDemandForecastRuleCreateSchema(BaseModel):
+    name: str
+    category: Optional[str] = "Dairy & Breakfast"
+    demand_multiplier: Optional[float] = 1.5
+    stockout_threshold_hours: Optional[int] = 6
+    auto_restock_enabled: Optional[bool] = True
+    status: Optional[str] = "ACTIVE"
+    notes: Optional[str] = None
+
+class AiDemandForecastRuleUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    demand_multiplier: Optional[float] = None
+    stockout_threshold_hours: Optional[int] = None
+    auto_restock_enabled: Optional[bool] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+class AiDemandForecastRuleSchema(AiDemandForecastRuleCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+
