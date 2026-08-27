@@ -53,19 +53,37 @@ export default function ReviewsView() {
     { id: 4, name: 'Nutella Hazelnut Spread (350 g)', count: 118, price: 340, inStock: false },
   ]);
 
-  const handleApprove = (id) => {
+  const handleApprove = async (id) => {
+    try {
+      await fetch(`/api/admin/reviews/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'APPROVED' })
+      });
+    } catch {}
     setReviews(reviews.map(r => r.id === id ? { ...r, status: 'APPROVED' } : r));
   };
 
-  const handleReject = (id) => {
+  const handleReject = async (id) => {
+    try {
+      await fetch(`/api/admin/reviews/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'REJECTED' })
+      });
+    } catch {}
     setReviews(reviews.map(r => r.id === id ? { ...r, status: 'REJECTED' } : r));
   };
 
-  const handleDelete = (id) => {
-    if (confirm('Delete this review?')) {
+  const handleDelete = async (id) => {
+    if (confirm('Delete this customer review?')) {
+      try {
+        await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+      } catch {}
       setReviews(reviews.filter(r => r.id !== id));
     }
   };
+
 
   const filteredReviews = reviews.filter(r =>
     filterRating === 'ALL' || r.rating === parseInt(filterRating)

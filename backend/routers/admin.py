@@ -826,9 +826,34 @@ def get_all_reviews(db: Session = Depends(get_db)):
             "rating": ord.rating,
             "comment": ord.rating_comment or "Great delivery service and fresh items!",
             "date": ord.created_at.strftime("%d %b %Y"),
-            "status": "APPROVED"
+            "status": "APPROVED" if (ord.rating and ord.rating >= 4) else "PENDING_REVIEW"
         })
     return results
+
+@router.patch("/reviews/{order_id}")
+def moderate_review(order_id: int, payload: dict, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    # Status or comment update
+    if "status" in payload:
+        # e.g., if rejected, clear rating or flag it
+        if payload["status"] == "REJECTED":
+            order.rating_comment = "[Review Hidden by Admin]"
+    db.commit()
+    return {"message": "Review status updated successfully"}
+
+@router.delete("/reviews/{order_id}")
+def delete_review(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    order.rating = None
+    order.rating_comment = None
+    order.rating_tags = None
+    db.commit()
+    return {"message": "Review deleted successfully"}
+
 
 
 # ======================= ADMIN USERS CRUD (RBAC & SECURITY) =======================
