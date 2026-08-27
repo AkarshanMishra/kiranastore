@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldCheck, Lock, Smartphone, Users, Key, CheckCircle2, AlertTriangle, 
-  LogOut, Power, Plus, Trash2, Edit, Search, Filter, Globe, RefreshCw, X, ShieldAlert, Check
+  LogOut, Power, Plus, Trash2, Edit, Search, Filter, Globe, RefreshCw, X, ShieldAlert, Check,
+  ShoppingBag, Package, Tag, Truck, Flame, DollarSign, MessageSquare, BarChart3, Building2, Settings
 } from 'lucide-react';
+
+const SYSTEM_MODULES = [
+  'Orders', 'Inventory', 'Catalog', 'Logistics', 'Marketing', 
+  'Finance', 'Customers', 'Support', 'Reports', 'Suppliers', 'Security', 'Settings'
+];
 
 export default function SecurityView() {
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'firewall' | 'sessions' | 'policies'
@@ -13,9 +19,9 @@ export default function SecurityView() {
   // --- Admin Users State ---
   const [adminUsers, setAdminUsers] = useState([
     { id: 1, name: 'Akarshan Mishra', email: 'admin@kiranastore.com', role: 'Super Admin', permissions: 'Full Access (All Modules)', status: 'ACTIVE', last_login: 'Just now', two_factor_enabled: true },
-    { id: 2, name: 'Amit Varma', email: 'amit.v@kiranastore.com', role: 'Store Manager', permissions: 'Orders, Inventory, Delivery', status: 'ACTIVE', last_login: '2 hours ago', two_factor_enabled: true },
-    { id: 3, name: 'Sandeep Rai', email: 'sandeep@kiranastore.com', role: 'Inventory Manager', permissions: 'Stock, Products, Suppliers', status: 'ACTIVE', last_login: 'Yesterday', two_factor_enabled: false },
-    { id: 4, name: 'Neha Kapoor', email: 'neha.k@kiranastore.com', role: 'Marketing Manager', permissions: 'Offers, Coupons, Banners', status: 'ACTIVE', last_login: '3 days ago', two_factor_enabled: true },
+    { id: 2, name: 'Amit Varma', email: 'amit.v@kiranastore.com', role: 'Store Manager', permissions: 'Orders, Inventory, Logistics, Support', status: 'ACTIVE', last_login: '2 hours ago', two_factor_enabled: true },
+    { id: 3, name: 'Sandeep Rai', email: 'sandeep@kiranastore.com', role: 'Inventory Manager', permissions: 'Inventory, Catalog, Suppliers, Reports', status: 'ACTIVE', last_login: 'Yesterday', two_factor_enabled: false },
+    { id: 4, name: 'Neha Kapoor', email: 'neha.k@kiranastore.com', role: 'Marketing Manager', permissions: 'Marketing, Catalog', status: 'ACTIVE', last_login: '3 days ago', two_factor_enabled: true },
   ]);
 
   // Modal State for User Create / Edit
@@ -25,10 +31,11 @@ export default function SecurityView() {
     name: '',
     email: '',
     role: 'Store Manager',
-    permissions: 'Orders, Inventory, Delivery',
+    permissions: 'Orders, Inventory, Logistics',
     status: 'ACTIVE',
     two_factor_enabled: true
   });
+  const [selectedModules, setSelectedModules] = useState(['Orders', 'Inventory', 'Logistics']);
 
   // --- IP Whitelist / Firewall Rules State ---
   const [firewallRules, setFirewallRules] = useState([
@@ -89,15 +96,20 @@ export default function SecurityView() {
       name: '',
       email: '',
       role: 'Store Manager',
-      permissions: 'Orders, Inventory, Delivery',
+      permissions: 'Orders, Inventory, Logistics',
       status: 'ACTIVE',
       two_factor_enabled: true
     });
+    setSelectedModules(['Orders', 'Inventory', 'Logistics']);
     setIsUserModalOpen(true);
   };
 
   const handleOpenEditUser = (user) => {
     setEditingUser(user);
+    const parsedMods = user.permissions 
+      ? user.permissions.split(',').map(s => s.trim()).filter(Boolean)
+      : ['Orders', 'Inventory'];
+
     setUserFormData({
       name: user.name,
       email: user.email,
@@ -106,27 +118,42 @@ export default function SecurityView() {
       status: user.status || 'ACTIVE',
       two_factor_enabled: user.two_factor_enabled ?? true
     });
+    setSelectedModules(parsedMods);
     setIsUserModalOpen(true);
+  };
+
+  const handleToggleUserModule = (mod) => {
+    let updated;
+    if (selectedModules.includes(mod)) {
+      updated = selectedModules.filter(m => m !== mod);
+    } else {
+      updated = [...selectedModules, mod];
+    }
+    setSelectedModules(updated);
+    setUserFormData(prev => ({ ...prev, permissions: updated.join(', ') }));
   };
 
   const handleSaveUser = async (e) => {
     e.preventDefault();
     if (!userFormData.name || !userFormData.email) return;
 
+    const payload = {
+      ...userFormData,
+      permissions: selectedModules.join(', ')
+    };
+
     if (editingUser) {
-      // Update
       try {
         await fetch(`/api/admin/users/${editingUser.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userFormData)
+          body: JSON.stringify(payload)
         });
       } catch {}
-      setAdminUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...userFormData } : u));
+      setAdminUsers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...payload } : u));
     } else {
-      // Create
       const newObj = {
-        ...userFormData,
+        ...payload,
         id: Date.now(),
         last_login: 'Never'
       };
@@ -134,7 +161,7 @@ export default function SecurityView() {
         const res = await fetch('/api/admin/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userFormData)
+          body: JSON.stringify(payload)
         });
         if (res.ok) {
           const created = await res.json();
@@ -370,10 +397,14 @@ export default function SecurityView() {
                         </span>
                       </td>
 
-                      <td className="py-3.5 px-4 max-w-[220px]">
-                        <span className="text-slate-700 font-semibold text-[11px] truncate block" title={u.permissions}>
-                          {u.permissions}
-                        </span>
+                      <td className="py-3.5 px-4 max-w-[240px]">
+                        <div className="flex flex-wrap gap-1">
+                          {(u.permissions || 'Standard').split(',').map((p, idx) => (
+                            <span key={idx} className="bg-slate-100 text-slate-700 font-bold text-[10px] px-1.5 py-0.5 rounded">
+                              {p.trim()}
+                            </span>
+                          ))}
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -670,10 +701,10 @@ export default function SecurityView() {
         </form>
       )}
 
-      {/* MODAL 1: ADD / EDIT ADMIN USER */}
+      {/* MODAL 1: ADD / EDIT ADMIN USER WITH INTERACTIVE MODULE SELECTOR */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 relative shadow-2xl animate-in zoom-in duration-200 space-y-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 relative shadow-2xl animate-in zoom-in duration-200 space-y-4 max-h-[92vh] overflow-y-auto">
             <button
               onClick={() => setIsUserModalOpen(false)}
               className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-full"
@@ -741,15 +772,35 @@ export default function SecurityView() {
                 </div>
               </div>
 
+              {/* Simply Select Modules */}
               <div>
-                <label className="block text-slate-700 font-bold mb-1">Scope & Module Permissions</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Orders, Inventory, Catalog, Delivery"
-                  value={userFormData.permissions}
-                  onChange={(e) => setUserFormData({ ...userFormData, permissions: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold outline-none focus:border-purple-600"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-slate-700 font-bold">Simply Select Module Permissions</label>
+                  <span className="text-[10px] text-purple-700 font-extrabold">
+                    {selectedModules.length} Modules Granted
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-100 max-h-[160px] overflow-y-auto">
+                  {SYSTEM_MODULES.map((mod) => {
+                    const isChecked = selectedModules.includes(mod);
+                    return (
+                      <button
+                        type="button"
+                        key={mod}
+                        onClick={() => handleToggleUserModule(mod)}
+                        className={`flex items-center justify-between p-2 rounded-xl text-left font-bold text-[11px] transition ${
+                          isChecked 
+                            ? 'bg-purple-600 text-white shadow-xs' 
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{mod}</span>
+                        {isChecked && <Check size={12} className="stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
@@ -767,8 +818,9 @@ export default function SecurityView() {
 
               <button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3 rounded-2xl shadow-sm transition mt-2"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3 rounded-2xl shadow-sm transition mt-2 flex items-center justify-center gap-2"
               >
+                <CheckCircle2 size={16} />
                 {editingUser ? 'Save Changes' : 'Create Admin Account'}
               </button>
             </form>
