@@ -165,11 +165,13 @@ export default function Navbar({
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div 
                 onClick={() => window.location.reload()}
-                className="cursor-pointer flex items-center gap-1 select-none flex-shrink-0"
+                className="cursor-pointer flex items-center gap-1.5 select-none flex-shrink-0"
               >
-                <div className="bg-brand-yellow text-gray-900 font-black text-base sm:text-xl px-2 py-0.5 rounded-lg shadow-xs tracking-tight">
-                  Kirana<span className="text-brand-green">Store</span>
-                </div>
+                <img 
+                  src="/app_logo.png" 
+                  alt="Kirana Store" 
+                  className="h-8 sm:h-9 object-contain rounded-lg shadow-2xs"
+                />
               </div>
 
               {/* Location Picker Pill (Always visible & compact on mobile) */}
