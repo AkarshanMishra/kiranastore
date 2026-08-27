@@ -257,6 +257,42 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Product deleted from catalog successfully"}
 
+@router.post("/products/bulk")
+def bulk_product_actions(payload: dict, db: Session = Depends(get_db)):
+    action = payload.get("action") # "DELETE", "SET_IN_STOCK", "SET_OUT_OF_STOCK", "SET_CATEGORY", "PRICE_DISCOUNT"
+    product_ids = payload.get("product_ids", [])
+    value = payload.get("value")
+
+    if not product_ids:
+        raise HTTPException(status_code=400, detail="No products selected")
+
+    products = db.query(Product).filter(Product.id.in_(product_ids)).all()
+    count = len(products)
+
+    if action == "DELETE":
+        for p in products:
+            db.delete(p)
+    elif action == "SET_IN_STOCK":
+        for p in products:
+            p.in_stock = True
+            if p.stock == 0:
+                p.stock = 25
+    elif action == "SET_OUT_OF_STOCK":
+        for p in products:
+            p.in_stock = False
+            p.stock = 0
+    elif action == "SET_CATEGORY" and value is not None:
+        for p in products:
+            p.category_id = int(value)
+    elif action == "PRICE_DISCOUNT" and value is not None:
+        pct = float(value) # e.g. 10 for 10% off
+        for p in products:
+            p.discount_price = round(p.price * (1 - (pct / 100)), 0)
+
+    db.commit()
+    return {"message": f"Bulk action {action} applied to {count} products successfully", "affected_count": count}
+
+
 # ======================= CATEGORIES CRUD =======================
 @router.post("/categories", response_model=CategorySchema)
 def create_admin_category(payload: dict, db: Session = Depends(get_db)):
