@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage, Category, AdminUser, AuditLog, IntegrationConfig, AppSetting
+from models import (
+    Order, Product, OrderItem, Customer, SupportTicket, Notification, 
+    ChatMessage, Category, AdminUser, AuditLog, IntegrationConfig, AppSetting, AiKnowledgeBase
+)
 from schemas import (
     OrderSchema,
     OrderStatusUpdateSchema,
@@ -16,6 +19,7 @@ from schemas import (
     CustomerCreateSchema,
     CustomerUpdateSchema,
     SupportTicketSchema,
+    SupportTicketCreateSchema,
     NotificationCreateSchema,
     NotificationSchema,
     ChatMessageCreateSchema,
@@ -27,11 +31,15 @@ from schemas import (
     AuditLogSchema,
     IntegrationConfigCreateSchema,
     IntegrationConfigSchema,
-    AppSettingSchema
+    AppSettingSchema,
+    AiKnowledgeBaseCreateSchema,
+    AiKnowledgeBaseUpdateSchema,
+    AiKnowledgeBaseSchema
 )
 from routers.websocket import manager
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
 
 @router.get("/customers", response_model=List[CustomerSchema])
 def get_all_admin_customers(db: Session = Depends(get_db)):
@@ -297,9 +305,32 @@ def delete_admin_category(category_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Category deleted successfully"}
 
+# ---------------------------------------------------------------
+# SUPPORT TICKETS CRUD
+# ---------------------------------------------------------------
 @router.get("/support/tickets", response_model=List[SupportTicketSchema])
 def get_all_support_tickets(db: Session = Depends(get_db)):
     return db.query(SupportTicket).order_by(SupportTicket.created_at.desc()).all()
+
+@router.post("/support/tickets", response_model=SupportTicketSchema)
+def create_admin_support_ticket(payload: SupportTicketCreateSchema, db: Session = Depends(get_db)):
+    import random
+    new_tid = f"TICK-{random.randint(400, 999)}"
+    ticket = SupportTicket(
+        ticket_id=new_tid,
+        customer_name=payload.customer_name,
+        phone=payload.phone,
+        order_number=payload.order_number,
+        category=payload.category,
+        subject=payload.subject,
+        message=payload.message,
+        status="OPEN",
+        priority="HIGH"
+    )
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return ticket
 
 @router.patch("/support/tickets/{ticket_id}")
 def update_support_ticket(ticket_id: str, payload: dict, db: Session = Depends(get_db)):
@@ -308,10 +339,27 @@ def update_support_ticket(ticket_id: str, payload: dict, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Ticket not found")
     if "status" in payload:
         ticket.status = payload["status"]
+    if "priority" in payload:
+        ticket.priority = payload["priority"]
+    if "subject" in payload:
+        ticket.subject = payload["subject"]
     db.commit()
     db.refresh(ticket)
     return ticket
 
+@router.delete("/support/tickets/{ticket_id}")
+def delete_support_ticket(ticket_id: str, db: Session = Depends(get_db)):
+    ticket = db.query(SupportTicket).filter(SupportTicket.ticket_id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    db.delete(ticket)
+    db.commit()
+    return {"message": "Ticket deleted successfully"}
+
+
+# ---------------------------------------------------------------
+# LIVE SUPPORT CHATS CRUD
+# ---------------------------------------------------------------
 @router.get("/support/chats", response_model=List[ChatMessageSchema])
 def get_all_support_chats(ticket_id: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage)
@@ -332,6 +380,139 @@ def reply_support_chat(payload: ChatMessageCreateSchema, db: Session = Depends(g
     db.commit()
     db.refresh(msg)
     return msg
+
+@router.delete("/support/chats/{ticket_id}")
+def delete_chat_thread(ticket_id: str, db: Session = Depends(get_db)):
+    db.query(ChatMessage).filter(ChatMessage.ticket_id == ticket_id).delete()
+    db.commit()
+    return {"message": "Chat thread cleared successfully"}
+
+
+# ---------------------------------------------------------------
+# CUSTOMER ORDER RATINGS & FEEDBACK CRUD
+# ---------------------------------------------------------------
+@router.get("/support/ratings")
+def get_all_customer_ratings(db: Session = Depends(get_db)):
+    rated_orders = (
+        db.query(Order)
+        .filter(Order.rating.isnot(None))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+    results = []
+    for o in rated_orders:
+        results.append({
+            "order_id": o.id,
+            "order_number": o.order_number or f"KS-{o.id}",
+            "customer_name": o.customer_name,
+            "phone": o.phone,
+            "total_amount": o.total_amount,
+            "rating": o.rating,
+            "rating_comment": o.rating_comment or "",
+            "rating_tags": o.rating_tags or "",
+            "resolution_notes": getattr(o, "delivery_notes", "") or "",
+            "status": "RESOLVED" if (o.rating and o.rating >= 4) else "PENDING_REVIEW",
+            "created_at": o.created_at
+        })
+    return results
+
+@router.patch("/support/ratings/{order_id}")
+def update_rating_resolution(order_id: int, payload: dict, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if "resolution_notes" in payload:
+        order.delivery_notes = payload["resolution_notes"]
+    db.commit()
+    db.refresh(order)
+    return {"message": "Feedback resolution updated", "order_id": order_id}
+
+
+# ---------------------------------------------------------------
+# KIRA AI KNOWLEDGE BASE & INTENT PROMPT STUDIO CRUD
+# ---------------------------------------------------------------
+@router.get("/ai/knowledge", response_model=List[AiKnowledgeBaseSchema])
+def get_ai_knowledge_base(db: Session = Depends(get_db)):
+    return db.query(AiKnowledgeBase).order_by(AiKnowledgeBase.created_at.desc()).all()
+
+@router.post("/ai/knowledge", response_model=AiKnowledgeBaseSchema)
+def create_ai_knowledge_entry(payload: AiKnowledgeBaseCreateSchema, db: Session = Depends(get_db)):
+    entry = AiKnowledgeBase(
+        topic=payload.topic,
+        category=payload.category or "GENERAL",
+        keywords=payload.keywords,
+        intent=payload.intent or "FAQ",
+        response_template=payload.response_template,
+        action_trigger=payload.action_trigger,
+        is_active=payload.is_active if payload.is_active is not None else True,
+        confidence_score=payload.confidence_score or 0.95
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+@router.patch("/ai/knowledge/{entry_id}", response_model=AiKnowledgeBaseSchema)
+def update_ai_knowledge_entry(entry_id: int, payload: AiKnowledgeBaseUpdateSchema, db: Session = Depends(get_db)):
+    entry = db.query(AiKnowledgeBase).filter(AiKnowledgeBase.id == entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Knowledge entry not found")
+    update_data = payload.dict(exclude_unset=True)
+    for k, v in update_data.items():
+        setattr(entry, k, v)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+@router.delete("/ai/knowledge/{entry_id}")
+def delete_ai_knowledge_entry(entry_id: int, db: Session = Depends(get_db)):
+    entry = db.query(AiKnowledgeBase).filter(AiKnowledgeBase.id == entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Knowledge entry not found")
+    db.delete(entry)
+    db.commit()
+    return {"message": "Knowledge entry deleted successfully"}
+
+@router.post("/ai/test")
+def test_ai_query(payload: dict, db: Session = Depends(get_db)):
+    query = payload.get("query", "").lower().strip()
+    if not query:
+        return {"matched": False, "response": "Please provide a query to test."}
+    
+    entries = db.query(AiKnowledgeBase).filter(AiKnowledgeBase.is_active == True).all()
+    best_match = None
+    max_score = 0
+
+    for entry in entries:
+        kw_list = [k.strip().lower() for k in entry.keywords.split(",") if k.strip()]
+        matched_kws = [k for k in kw_list if k in query]
+        if matched_kws:
+            score = len(matched_kws) / len(kw_list) + (entry.confidence_score or 0.5)
+            if score > max_score:
+                max_score = score
+                best_match = entry
+
+    if best_match:
+        return {
+            "matched": True,
+            "topic": best_match.topic,
+            "category": best_match.category,
+            "intent": best_match.intent,
+            "response": best_match.response_template,
+            "action_trigger": best_match.action_trigger,
+            "confidence": min(0.99, round(0.80 + (max_score * 0.1), 2))
+        }
+
+    return {
+        "matched": False,
+        "topic": "General Fallback",
+        "category": "GENERAL",
+        "intent": "FALLBACK",
+        "response": "I understand your request! Let me connect you with our live store support team or find fresh items for your cart.",
+        "action_trigger": "CONNECT_LIVE_SUPPORT",
+        "confidence": 0.65
+    }
+
 
 @router.get("/notifications", response_model=List[NotificationSchema])
 def get_admin_notifications(db: Session = Depends(get_db)):

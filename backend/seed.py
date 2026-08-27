@@ -592,4 +592,78 @@ def _seed_cms_defaults(db):
             db.add(si)
         print("Seeded default integrations.")
 
+    from models import AiKnowledgeBase, SupportTicket, ChatMessage
+    if db.query(AiKnowledgeBase).count() == 0:
+        sample_ai_kb = [
+            AiKnowledgeBase(
+                topic="Instant 10-Minute Refund Guarantee",
+                category="REFUNDS",
+                keywords="refund, cancel, money back, return, damaged, missing item, wrong product",
+                intent="ACTION",
+                response_template="Namaste! We offer a 100% Instant Refund guarantee for missing or damaged items directly to your KiranaWallet. Would you like me to initiate a refund for your recent order?",
+                action_trigger="INITIATE_REFUND",
+                confidence_score=0.98
+            ),
+            AiKnowledgeBase(
+                topic="Real-Time Order Tracking & ETA",
+                category="ORDERS",
+                keywords="track, where is my order, status, rider location, delivery time, late order, eta",
+                intent="ACTION",
+                response_template="Your order is currently being packed with utmost care at your nearest dark store hub! Our express rider will reach your doorstep in under 10 minutes.",
+                action_trigger="FETCH_ORDER_STATUS",
+                confidence_score=0.99
+            ),
+            AiKnowledgeBase(
+                topic="Chef Kira Recipe Ingredient Bundles",
+                category="RECIPES",
+                keywords="recipe, how to make, shahi paneer, chai, dal tadka, cook, ingredients, dinner idea",
+                intent="RECIPE",
+                response_template="I have generated the full recipe with step-by-step instructions and added all fresh ingredients (Paneer, Ghee, Masalas) to your 1-click cart bundle!",
+                action_trigger="SHOW_RECIPE",
+                confidence_score=0.95
+            ),
+            AiKnowledgeBase(
+                topic="Monthly Rashan Smart Replenishment",
+                category="ORDERS",
+                keywords="monthly rashan, subscribe, bulk atta, dal monthly, repeat order, grocery list",
+                intent="ACTION",
+                response_template="Our Monthly Rashan service offers up to 25% extra savings on staples like Aashirvaad Atta, Fortune Oil, and Pulses with scheduled auto-delivery on the 1st of every month.",
+                action_trigger="OPEN_RASHAN",
+                confidence_score=0.96
+            ),
+            AiKnowledgeBase(
+                topic="Delivery Hours & Operating Dark Stores",
+                category="DELIVERY",
+                keywords="hours, timings, open, night delivery, morning milk, schedule slot",
+                intent="FAQ",
+                response_template="KiranaStore delivers every day from 6:00 AM to 11:30 PM. Morning fresh dairy & bread slots begin at 6:30 AM!",
+                action_trigger=None,
+                confidence_score=0.97
+            ),
+        ]
+        for kb in sample_ai_kb:
+            db.add(kb)
+        print("Seeded default AI Knowledge Base.")
+
+    if db.query(SupportTicket).count() == 0:
+        sample_ticket = SupportTicket(
+            ticket_id="TICK-401",
+            customer_name="Priya Sharma",
+            phone="+91 9811223344",
+            order_number="KS-94820",
+            category="Delivery Slot Change",
+            subject="Please change delivery slot from 4 PM to 6 PM",
+            message="Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?",
+            status="RESOLVED",
+            priority="HIGH"
+        )
+        db.add(sample_ticket)
+        db.commit()
+
+    if db.query(ChatMessage).count() == 0:
+        db.add(ChatMessage(ticket_id="TICK-401", phone="+91 9811223344", customer_name="Priya Sharma", sender="customer", text="Hi, I will not be home at 4 PM. Can you please deliver between 6 PM - 8 PM?"))
+        db.add(ChatMessage(ticket_id="TICK-401", phone="+91 9811223344", customer_name="Store Support Executive", sender="support", text="Hello Priya, we have updated your delivery slot to 6:00 PM - 8:00 PM today."))
+        db.commit()
+
     db.commit()
+

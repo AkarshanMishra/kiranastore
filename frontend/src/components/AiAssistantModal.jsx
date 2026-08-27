@@ -19,8 +19,10 @@ import {
   RefreshCw,
   ChefHat
 } from 'lucide-react';
+import { fetchApi } from '../apiClient';
 
 export default function AiAssistantModal({ isOpen, onClose, products = [], addToCart }) {
+
   const [activeMode, setActiveMode] = useState('chat'); // 'chat' | 'recipes' | 'budget' | 'diet'
   const [messages, setMessages] = useState([
     {
@@ -230,17 +232,44 @@ export default function AiAssistantModal({ isOpen, onClose, products = [], addTo
   };
 
   // Chatbot Assistant Engine
-  const handleSendQuery = (text) => {
+  const handleSendQuery = async (text) => {
     const query = (text || input).trim();
     if (!query) return;
 
     setMessages(prev => [...prev, { sender: 'user', text: query, time: 'Just now' }]);
     setInput('');
 
+    // First try backend AI Knowledge Base
+    try {
+      const userPhone = localStorage.getItem('kirana_customer_user')
+        ? JSON.parse(localStorage.getItem('kirana_customer_user')).phone
+        : '+91 9876543210';
+      const aiRes = await fetchApi('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: query, text: query, phone: userPhone })
+      });
+      if (aiRes.ok) {
+        const aiData = await aiRes.json();
+        if (aiData && aiData.text && aiData.action !== 'SHOW_OPTIONS') {
+          // If recipe action
+          if (aiData.action === 'SHOW_RECIPE') {
+            const matched = products.slice(0, 4);
+            setCuratedItems(matched);
+          }
+          setMessages(prev => [...prev, { sender: 'bot', text: aiData.text, time: 'Just now' }]);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Backend AI fallback:', e);
+    }
+
     setTimeout(() => {
       let reply = "Here is what I found for you:";
       let matched = [];
       const queryLower = query.toLowerCase();
+
 
       // 1. Order Cancellation Intent
       if (queryLower.includes('cancel') && (queryLower.includes('order') || queryLower.includes('ks-') || queryLower.includes('item'))) {

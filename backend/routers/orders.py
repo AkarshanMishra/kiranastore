@@ -5,7 +5,7 @@ import random
 import string
 import asyncio
 from database import get_db
-from models import Order, OrderItem, Product, Customer, SupportTicket, Notification, ChatMessage
+from models import Order, OrderItem, Product, Customer, SupportTicket, Notification, ChatMessage, AiKnowledgeBase
 from schemas import (
     OrderCreateSchema,
     OrderSchema,
@@ -22,6 +22,7 @@ from schemas import (
 from routers.websocket import manager
 
 router = APIRouter(prefix="/api", tags=["orders"])
+
 
 def generate_order_number(prefix="KS"):
     rand_digits = ''.join(random.choices(string.digits, k=5))
@@ -313,4 +314,79 @@ def send_chat_message(payload: ChatMessageCreateSchema, db: Session = Depends(ge
     db.commit()
     db.refresh(msg)
     return msg
+
+
+@router.post("/ai/chat")
+def customer_ai_chat(payload: dict, db: Session = Depends(get_db)):
+    """Kira 2.0 Customer AI Chatbot endpoint powered by Admin AI Knowledge Base."""
+    query = payload.get("text", payload.get("message", "")).lower().strip()
+    phone = payload.get("phone", "+91 9876543210")
+    order_number = payload.get("order_number")
+
+    if not query:
+        return {
+            "text": "Namaste! How can Kira help you with your groceries, orders, recipes, or refund today?",
+            "action": None
+        }
+
+    # Match active knowledge base rules
+    entries = db.query(AiKnowledgeBase).filter(AiKnowledgeBase.is_active == True).all()
+    best_match = None
+    max_score = 0
+
+    for entry in entries:
+        kw_list = [k.strip().lower() for k in entry.keywords.split(",") if k.strip()]
+        matched_kws = [k for k in kw_list if k in query]
+        if matched_kws:
+            score = len(matched_kws) / len(kw_list) + (entry.confidence_score or 0.5)
+            if score > max_score:
+                max_score = score
+                best_match = entry
+
+    if best_match:
+        # Check if query requests order tracking and order exists
+        if "track" in query or "status" in query or "where" in query:
+            clean_p = phone.replace("+91", "").replace(" ", "").strip()
+            recent_order = (
+                db.query(Order)
+                .filter(Order.phone.like(f"%{clean_p}%"))
+                .order_by(Order.created_at.desc())
+                .first()
+            )
+            if recent_order:
+                return {
+                    "text": f"Found your Order #{recent_order.order_number}! Current status: {recent_order.order_status} (Delivery SLA: {recent_order.delivery_slot_display or '10 Mins Express'}). Estimated arrival: Under 10 minutes!",
+                    "action": "FETCH_ORDER_STATUS",
+                    "order_number": recent_order.order_number,
+                    "order_status": recent_order.order_status
+                }
+
+        # Check if query requests refund
+        if "refund" in query or "cancel" in query or "damaged" in query:
+            clean_p = phone.replace("+91", "").replace(" ", "").strip()
+            recent_order = (
+                db.query(Order)
+                .filter(Order.phone.like(f"%{clean_p}%"))
+                .order_by(Order.created_at.desc())
+                .first()
+            )
+            if recent_order:
+                return {
+                    "text": f"I have reviewed Order #{recent_order.order_number} (₹{recent_order.total_amount:.2f}). Our instant 10-minute refund policy applies! I have flagged this for immediate wallet credit or rider replacement.",
+                    "action": "INITIATE_REFUND",
+                    "order_number": recent_order.order_number
+                }
+
+        return {
+            "text": best_match.response_template,
+            "action": best_match.action_trigger,
+            "category": best_match.category
+        }
+
+    # Fallback smart response
+    return {
+        "text": "I understand your kitchen & grocery request! Would you like me to find the freshest items, curate a recipe bundle, or connect with our store manager?",
+        "action": "SHOW_OPTIONS"
+    }
+
 

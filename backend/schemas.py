@@ -393,3 +393,32 @@ class IntegrationConfigSchema(IntegrationConfigCreateSchema):
     class Config:
         from_attributes = True
 
+
+class AiKnowledgeBaseCreateSchema(BaseModel):
+    topic: str
+    category: Optional[str] = "GENERAL"
+    keywords: str
+    intent: Optional[str] = "FAQ"
+    response_template: str
+    action_trigger: Optional[str] = None
+    is_active: Optional[bool] = True
+    confidence_score: Optional[float] = 0.95
+
+class AiKnowledgeBaseUpdateSchema(BaseModel):
+    topic: Optional[str] = None
+    category: Optional[str] = None
+    keywords: Optional[str] = None
+    intent: Optional[str] = None
+    response_template: Optional[str] = None
+    action_trigger: Optional[str] = None
+    is_active: Optional[bool] = None
+    confidence_score: Optional[float] = None
+
+class AiKnowledgeBaseSchema(AiKnowledgeBaseCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+

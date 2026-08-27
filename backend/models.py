@@ -262,3 +262,20 @@ class IntegrationConfig(Base):
     status = Column(String, default="CONNECTED") # CONNECTED, PAUSED, ERROR
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+
+class AiKnowledgeBase(Base):
+    """Kira AI Chatbot knowledge base entries, FAQs, prompt rules & quick intent actions."""
+    __tablename__ = "ai_knowledge_base"
+
+    id = Column(Integer, primary_key=True, index=True)
+    topic = Column(String, nullable=False) # e.g. "Instant Refund Policy"
+    category = Column(String, default="GENERAL") # ORDERS, REFUNDS, DELIVERY, RECIPES, OFFERS, GENERAL
+    keywords = Column(String, nullable=False) # Comma-separated triggers: "refund, cancel, money back, return"
+    intent = Column(String, default="FAQ") # FAQ, ACTION, RECIPE, ESCALATION
+    response_template = Column(String, nullable=False)
+    action_trigger = Column(String, nullable=True) # e.g. "FETCH_ORDER_STATUS", "INITIATE_REFUND", "SHOW_RECIPE"
+    is_active = Column(Boolean, default=True)
+    confidence_score = Column(Float, default=0.95)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
