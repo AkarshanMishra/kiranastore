@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage
+from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage, Category
 from schemas import (
     OrderSchema,
     OrderStatusUpdateSchema,
@@ -10,6 +10,8 @@ from schemas import (
     OrderItemizeSchema,
     ProductSchema,
     ProductCreateUpdateSchema,
+    ProductUpdateSchema,
+    CategorySchema,
     CustomerSchema,
     CustomerCreateSchema,
     CustomerUpdateSchema,
@@ -213,7 +215,7 @@ def add_product(payload: ProductCreateUpdateSchema, db: Session = Depends(get_db
 @router.patch("/products/{product_id}", response_model=ProductSchema)
 def update_product_stock(
     product_id: int,
-    payload: ProductCreateUpdateSchema,
+    payload: ProductUpdateSchema,
     db: Session = Depends(get_db)
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -226,6 +228,66 @@ def update_product_stock(
     db.commit()
     db.refresh(product)
     return product
+
+@router.delete("/products/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    db.delete(product)
+    db.commit()
+    return {"message": "Product deleted from catalog successfully"}
+
+# ======================= CATEGORIES CRUD =======================
+@router.post("/categories", response_model=CategorySchema)
+def create_admin_category(payload: dict, db: Session = Depends(get_db)):
+    name = (payload.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+    slug = (payload.get("slug") or name.lower().replace(" ", "-")).strip()
+    existing = db.query(Category).filter(Category.name == name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already exists")
+    cat = Category(
+        name=name,
+        slug=slug,
+        icon=payload.get("icon") or "📦",
+        image_url=payload.get("image_url"),
+    )
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+@router.patch("/categories/{category_id}", response_model=CategorySchema)
+def update_admin_category(category_id: int, payload: dict, db: Session = Depends(get_db)):
+    cat = db.query(Category).filter(Category.id == category_id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    if "name" in payload and payload["name"]:
+        cat.name = payload["name"]
+    if "slug" in payload and payload["slug"]:
+        cat.slug = payload["slug"]
+    if "icon" in payload:
+        cat.icon = payload["icon"] or cat.icon
+    if "image_url" in payload:
+        cat.image_url = payload["image_url"]
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+@router.delete("/categories/{category_id}")
+def delete_admin_category(category_id: int, db: Session = Depends(get_db)):
+    cat = db.query(Category).filter(Category.id == category_id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    # Re-assign products to no category (keep products browsable)
+    db.query(Product).filter(Product.category_id == category_id).update(
+        {"category_id": None}, synchronize_session=False
+    )
+    db.delete(cat)
+    db.commit()
+    return {"message": "Category deleted successfully"}
 
 @router.get("/support/tickets", response_model=List[SupportTicketSchema])
 def get_all_support_tickets(db: Session = Depends(get_db)):

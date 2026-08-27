@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, Flame, ChevronRight, Tag } from 'lucide-react';
+import { Zap, Clock, Flame } from 'lucide-react';
+import { fetchApi } from '../apiClient';
 
 export default function FlashSaleBanner({ onSelectOfferCategory }) {
   const [timeLeft, setTimeLeft] = useState(14400); // 4 hours in seconds
+  const fallbackDeals = [
+    { title: 'Amul Desi Ghee 1L', discount: '₹41 OFF', tag: 'Bestseller', image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=100&q=80', price: '₹589', mrp: '₹630' },
+    { title: 'Aashirvaad Atta 5kg', discount: '₹26 OFF', tag: 'Steal Deal', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80', price: '₹219', mrp: '₹245' },
+    { title: 'Maggi 4-Pack Noodles', discount: '₹6 OFF', tag: 'Hot Seller', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=100&q=80', price: '₹52', mrp: '₹58' },
+    { title: 'Coca Cola Can 300ml', discount: '₹5 OFF', tag: 'Chilled', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&q=80', price: '₹35', mrp: '₹40' }
+  ];
+  const [deals, setDeals] = useState(fallbackDeals);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -18,12 +26,36 @@ export default function FlashSaleBanner({ onSelectOfferCategory }) {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const deals = [
-    { title: 'Amul Desi Ghee 1L', discount: '₹41 OFF', tag: 'Bestseller', image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=100&q=80', price: '₹589', mrp: '₹630' },
-    { title: 'Aashirvaad Atta 5kg', discount: '₹26 OFF', tag: 'Steal Deal', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80', price: '₹219', mrp: '₹245' },
-    { title: 'Maggi 4-Pack Noodles', discount: '₹6 OFF', tag: 'Hot Seller', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=100&q=80', price: '₹52', mrp: '₹58' },
-    { title: 'Coca Cola Can 300ml', discount: '₹5 OFF', tag: 'Chilled', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&q=80', price: '₹35', mrp: '₹40' }
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDeals = async () => {
+      try {
+        const res = await fetchApi('/api/flashdeals');
+        if (!res.ok) throw new Error('Failed to load flash deals');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setDeals(data.map((deal) => ({
+            title: deal.title,
+            discount: deal.discount_label || '',
+            tag: deal.tag || 'Deal',
+            image: deal.image_url || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=100&q=80',
+            price: deal.price_label || '',
+            mrp: deal.mrp_label || ''
+          })));
+        }
+      } catch (err) {
+        if (isMounted) setDeals(fallbackDeals);
+      }
+    };
+
+    loadDeals();
+    window.addEventListener('api_base_url_changed', loadDeals);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('api_base_url_changed', loadDeals);
+    };
+  }, []);
 
   return (
     <div className="my-6 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">

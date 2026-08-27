@@ -220,9 +220,23 @@ export default function App() {
     setProducts((prev) => [newProduct, ...prev]);
   };
 
-  const handleDeleteProduct = (productId) => {
-    setProducts((prev) => prev.filter((p) => p.id !== productId));
-    alert("Product deleted from catalog!");
+  const handleDeleteProduct = async (productId) => {
+    try {
+      const res = await fetch(`/api/admin/products/${productId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        alert("Product deleted from catalog!");
+      } else {
+        // Fallback: still remove locally so the UI stays consistent
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        alert("Product removed locally (server not reachable). It will return on next refresh if not saved.");
+      }
+    } catch (err) {
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+      alert("Product removed locally (server not reachable). It will return on next refresh if not saved.");
+    }
   };
 
   const renderActiveView = () => {

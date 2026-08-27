@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, ShoppingBag, MapPin, ChevronDown, Store, X, Heart, TrendingUp, Sparkles, Bell, Globe, Sun, Moon, Bot, Mic, Volume2, Crosshair, Loader2, Navigation, CheckCircle2, AlertCircle, User, LogIn } from 'lucide-react';
 import VoiceSearchModal from './VoiceSearchModal';
+import { fetchApi } from '../apiClient';
 
 export default function Navbar({
   searchQuery,
@@ -29,6 +30,7 @@ export default function Navbar({
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState(null); // { type: 'success'|'error', message: string }
+  const [announcement, setAnnouncement] = useState('');
 
   const totalCartCount = Object.values(cart).reduce((sum, item) => sum + item.quantity, 0);
   const totalCartPrice = Object.values(cart).reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -36,6 +38,29 @@ export default function Navbar({
   const trendingSearches = language === 'HI'
     ? ['अमूल दूध', 'पनीर', 'मैगी 2-मिनट', 'लेस मसाला', 'कोका कोला', 'ओरियो', 'मक्खन']
     : ['Amul Milk', 'Paneer', 'Maggi 2-Min', 'Lays Masala', 'Coca Cola', 'Oreo', 'Butter'];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAnnouncement = async () => {
+      try {
+        const res = await fetchApi('/api/config');
+        if (!res.ok) throw new Error('Failed to load app config');
+        const config = await res.json();
+        const found = Array.isArray(config) ? config.find((item) => item.key === 'announcement') : null;
+        if (isMounted) setAnnouncement(found?.value || '');
+      } catch (err) {
+        if (isMounted) setAnnouncement('');
+      }
+    };
+
+    loadAnnouncement();
+    window.addEventListener('api_base_url_changed', loadAnnouncement);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('api_base_url_changed', loadAnnouncement);
+    };
+  }, []);
 
   // Dynamic live search matched products
   const matchedProducts = searchQuery.trim()
@@ -123,9 +148,9 @@ export default function Navbar({
       <div className="bg-gradient-to-r from-emerald-700 via-brand-green to-teal-700 text-white text-[11px] sm:text-xs py-1.5 px-3 sm:px-4 text-center font-bold flex items-center justify-center gap-1.5 sm:gap-2">
         <Sparkles size={13} className="text-yellow-300 animate-pulse flex-shrink-0" />
         <span className="truncate">
-          {language === 'HI'
+          {announcement || (language === 'HI'
             ? '⚡ त्वरित होम डिलीवरी — सीधे स्थानीय किराना स्टोर से'
-            : '⚡ FAST EXPRESS HOME DELIVERY — DIRECT FROM LOCAL STORE'}
+            : '⚡ FAST EXPRESS HOME DELIVERY — DIRECT FROM LOCAL STORE')}
         </span>
         <span className="hidden md:inline opacity-85">| {language === 'HI' ? '₹500+ पर मुफ्त डिलीवरी' : 'Free Delivery over ₹500'}</span>
       </div>

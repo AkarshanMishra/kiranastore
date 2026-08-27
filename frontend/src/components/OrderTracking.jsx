@@ -19,6 +19,7 @@ import {
   Sparkles,
   Store
 } from 'lucide-react';
+import { fetchApi, getApiBaseUrl } from '../apiClient';
 
 export default function OrderTracking({ orderNumber, onBackToStore }) {
   const [order, setOrder] = useState(null);
@@ -36,7 +37,7 @@ export default function OrderTracking({ orderNumber, onBackToStore }) {
 
   const fetchOrder = async () => {
     try {
-      const res = await fetch(`/api/orders/${orderNumber}`);
+      const res = await fetchApi(`/api/orders/${orderNumber}`);
       if (res.ok) {
         const data = await res.json();
         setOrder(data);
@@ -64,8 +65,11 @@ export default function OrderTracking({ orderNumber, onBackToStore }) {
   useEffect(() => {
     if (!orderNumber) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/orders/${orderNumber}`;
+    const apiBaseUrl = getApiBaseUrl();
+    const wsBaseUrl = apiBaseUrl
+      ? apiBaseUrl.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:')
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+    const wsUrl = `${wsBaseUrl}/ws/orders/${orderNumber}`;
     let ws;
     try {
       ws = new WebSocket(wsUrl);

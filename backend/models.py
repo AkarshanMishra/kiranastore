@@ -127,3 +127,90 @@ class ChatMessage(Base):
     sender = Column(String, nullable=False) # "customer" or "support"
     text = Column(String, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+# ---------------------------------------------------------------
+# CMS CONTENT MODELS - power the customer app sections that the
+# admin dashboard manages (banners, flash deals, brands, coupons).
+# ---------------------------------------------------------------
+class Banner(Base):
+    """Homepage hero banner carousel (managed by Admin -> Content Mgmt)."""
+    __tablename__ = "banners"
+
+    id = Column(Integer, primary_key=True, index=True)
+    badge = Column(String, nullable=True)
+    headline = Column(String, nullable=False)
+    subtext = Column(String, nullable=True)
+    cta = Column(String, nullable=True)
+    perk = Column(String, nullable=True)
+    icon = Column(String, nullable=True)
+    bg_gradient = Column(String, nullable=True)
+    accent_border = Column(String, nullable=True)
+    badge_color = Column(String, nullable=True)
+    cta_target = Column(String, nullable=True)
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class FlashDeal(Base):
+    """Flash-sale deal cards shown on the customer home page."""
+    __tablename__ = "flash_deals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)       # e.g. "Amul Desi Ghee 1L"
+    discount_label = Column(String, nullable=True)   # e.g. "₹41 OFF"
+    tag = Column(String, nullable=True)              # e.g. "Bestseller"
+    price_label = Column(String, nullable=True)      # e.g. "₹589"
+    mrp_label = Column(String, nullable=True)        # e.g. "₹630"
+    image_url = Column(String, nullable=True)
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class Brand(Base):
+    """FMCG brand tiles shown in the 'Shop by Official Brands' section."""
+    __tablename__ = "brands"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)   # e.g. "Amul"
+    logo = Column(String, nullable=True)                 # emoji or image url
+    category = Column(String, nullable=True)             # e.g. "Dairy & Beverages"
+    origin = Column(String, nullable=True)               # HQ location
+    logo_text = Column(String, nullable=True)             # short text logo
+    sort_order = Column(Integer, default=0)
+    is_featured = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class Coupon(Base):
+    """Promo coupon codes displayed in the customer Offers tab."""
+    __tablename__ = "coupons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, nullable=False, unique=True)    # e.g. "WELCOME100"
+    tag = Column(String, nullable=True)                  # e.g. "NEW USER"
+    discount_label = Column(String, nullable=True)       # e.g. "FLAT ₹100 OFF"
+    desc = Column(String, nullable=True)                 # e.g. "On orders above ₹499"
+    discount_type = Column(String, default="FLAT")       # FLAT | PERCENT
+    discount_value = Column(Float, default=0)             # number used for checkout math
+    min_order = Column(Float, default=0)                  # minimun basket value
+    max_discount = Column(Float, default=0)               # 0 means no cap
+    valid_till = Column(String, nullable=True)
+    first_order_only = Column(Boolean, default=False)
+    usage_limit = Column(Integer, default=1000)
+    used_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AppSetting(Base):
+    """Single-row / key-value app-wide settings (announcement ticker, etc)."""
+    __tablename__ = "app_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, nullable=False, unique=True)     # e.g. "announcement"
+    value = Column(String, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

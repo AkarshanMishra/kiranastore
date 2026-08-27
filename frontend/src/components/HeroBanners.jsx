@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, Sparkles, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import { fetchApi } from '../apiClient';
 
 export default function HeroBanners() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const banners = [
+  const fallbackBanners = [
     {
       badge: "⚡ 10-MIN EXPRESS HUB",
       headline: "Fresh Farm Dairy & Daily Staples",
@@ -40,14 +41,50 @@ export default function HeroBanners() {
     }
   ];
 
+  const [banners, setBanners] = useState(fallbackBanners);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBanners = async () => {
+      try {
+        const res = await fetchApi('/api/banners');
+        if (!res.ok) throw new Error('Failed to load banners');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setBanners(data.map((banner) => ({
+            badge: banner.badge || '⚡ LIVE OFFER',
+            headline: banner.headline,
+            subtext: banner.subtext || '',
+            cta: banner.cta || 'Shop Now',
+            bgGradient: banner.bg_gradient || fallbackBanners[0].bgGradient,
+            accentBorder: banner.accent_border || 'border-emerald-500/40',
+            badgeColor: banner.badge_color || 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
+            icon: banner.icon || '🛒',
+            perk: banner.perk || 'Fresh deals live now'
+          })));
+        }
+      } catch (err) {
+        if (isMounted) setBanners(fallbackBanners);
+      }
+    };
+
+    loadBanners();
+    window.addEventListener('api_base_url_changed', loadBanners);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('api_base_url_changed', loadBanners);
+    };
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % banners.length);
+      setCurrentSlide((prev) => (prev + 1) % Math.max(banners.length, 1));
     }, 4500);
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  const active = banners[currentSlide];
+  const active = banners[currentSlide] || fallbackBanners[0];
 
   return (
     <div className="max-w-7xl mx-auto px-2.5 sm:px-4 pt-2 pb-1">

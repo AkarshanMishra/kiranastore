@@ -6,10 +6,35 @@ def seed_database():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
-    # Clear existing products and categories for clean 1000+ item seed
-    db.query(Product).delete()
-    db.query(Category).delete()
-    db.commit()
+    # ------------------------------------------------------------------
+    # CRITICAL: only re-seed the catalog when it is empty so admin edits
+    # (products, categories, stock, prices, discounts) survive restarts.
+    # ------------------------------------------------------------------
+    catalog_exists = db.query(Product).count() > 0
+
+    if not catalog_exists:
+        # Clear existing products and categories for a clean first seed
+        db.query(Product).delete()
+        db.query(Category).delete()
+        db.commit()
+
+    if catalog_exists:
+        # Catalog untouched: seed CMS defaults + sample customers that are
+        # still missing, then preserve the existing catalog (admin edits).
+        _seed_cms_defaults(db)
+        from models import Customer
+        if db.query(Customer).count() == 0:
+            sample_customers = [
+                Customer(name="Akarshan Mishra", phone="+91 9876543210", email="akarshan@kiranastore.com", address="Flat 402, Block B, Sector 62, Noida, UP", wallet_balance=350.0, total_orders=5, total_spent=4200.0, status="ACTIVE"),
+                Customer(name="Priya Sharma", phone="+91 9811223344", email="priya.sharma@gmail.com", address="Tower 4, Flat 12B, Indirapuram, Ghaziabad, UP", wallet_balance=200.0, total_orders=3, total_spent=2890.0, status="ACTIVE"),
+                Customer(name="Rohan Verma", phone="+91 9822334455", email="rohan.verma@outlook.com", address="House 88, Sector 18 Market Road, Noida, UP", wallet_balance=150.0, total_orders=2, total_spent=1450.0, status="ACTIVE")
+            ]
+            for sc in sample_customers:
+                db.add(sc)
+            db.commit()
+        print("Catalog already populated. Skipping re-seed to preserve admin edits.")
+        db.close()
+        return
 
     print("Generating 1,050+ Blinkit/Zepto quick-commerce catalog items...")
 
@@ -423,9 +448,110 @@ def seed_database():
         for sc in sample_customers:
             db.add(sc)
 
+    # Seed admin-managed CMS default content (banners, flash deals...)
+    _seed_cms_defaults(db)
+
     db.commit()
     db.close()
     print(f"Database successfully populated with {len(products)} catalog items across 12 categories!")
 
 if __name__ == "__main__":
     seed_database()
+
+
+# ===============================================================
+# ADMIN-CONTROLLED CMS DEFAULTS (only inserted when tables empty)
+# ===============================================================
+DEFAULT_BANNERS = [
+    {
+        "badge": "⚡ 10-MIN EXPRESS HUB", "headline": "Fresh Farm Dairy & Daily Staples",
+        "subtext": "Amul Milk, Paneer & Breads straight from dark store shelves",
+        "cta": "Shop Dairy", "perk": "Zero Delivery Fee on ₹199+", "icon": "🥛",
+        "bg_gradient": "from-emerald-950 via-teal-900 to-emerald-900",
+        "accent_border": "border-emerald-500/40",
+        "badge_color": "bg-emerald-500/20 text-emerald-300 border-emerald-400/40",
+        "sort_order": 1,
+    },
+    {
+        "badge": "🔥 FLASH DEALS • UP TO 40% OFF", "headline": "Midnight Munchies & Party Packs",
+        "subtext": "Lay's, Cold Beverages, Chocolates & Namkeen at wholesale prices",
+        "cta": "Explore Deals", "perk": "Instant 10-Min Dispatch", "icon": "🍿",
+        "bg_gradient": "from-purple-950 via-indigo-950 to-purple-900",
+        "accent_border": "border-purple-500/40",
+        "badge_color": "bg-purple-500/20 text-purple-300 border-purple-400/40",
+        "sort_order": 2,
+    },
+    {
+        "badge": "👑 MONTHLY RASHAN HUB", "headline": "Save ₹500+ on 30-Day Household Grocery",
+        "subtext": "Upload handwritten slip photo or build custom monthly pack",
+        "cta": "Upload Slip", "perk": "Free Dark Store Itemization", "icon": "🌾",
+        "bg_gradient": "from-amber-950 via-orange-950 to-amber-900",
+        "accent_border": "border-amber-500/40",
+        "badge_color": "bg-amber-500/20 text-amber-300 border-amber-400/40",
+        "sort_order": 3,
+    },
+]
+
+DEFAULT_FLASH_DEALS = [
+    {"title": "Amul Desi Ghee 1L", "discount_label": "₹41 OFF", "tag": "Bestseller",
+     "image_url": "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=100&q=80", "price_label": "₹589", "mrp_label": "₹630", "sort_order": 1},
+    {"title": "Aashirvaad Atta 5kg", "discount_label": "₹26 OFF", "tag": "Steal Deal",
+     "image_url": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=100&q=80", "price_label": "₹219", "mrp_label": "₹245", "sort_order": 2},
+    {"title": "Maggi 4-Pack Noodles", "discount_label": "₹6 OFF", "tag": "Hot Seller",
+     "image_url": "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=100&q=80", "price_label": "₹52", "mrp_label": "₹58", "sort_order": 3},
+    {"title": "Coca Cola Can 300ml", "discount_label": "₹5 OFF", "tag": "Chilled",
+     "image_url": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=100&q=80", "price_label": "₹35", "mrp_label": "₹40", "sort_order": 4},
+]
+
+DEFAULT_BRANDS = [
+    {"name": "Amul", "logo": "🥛", "category": "Dairy & Ghee", "origin": "Anand, Gujarat", "logo_text": "AMUL", "sort_order": 1},
+    {"name": "Aashirvaad", "logo": "🌾", "category": "Atta & Salt", "origin": "Kolkata, WB", "logo_text": "ITC", "sort_order": 2},
+    {"name": "Lay's", "logo": "🍿", "category": "Chips & Snacks", "origin": "Gurugram, HR", "logo_text": "PEPSI", "sort_order": 3},
+    {"name": "Fortune", "logo": "🧈", "category": "Oils & Grains", "origin": "Ahmedabad, Gujarat", "logo_text": "ADANI", "sort_order": 4},
+    {"name": "Nestle (Maggi)", "logo": "🍜", "category": "Noodles & Coffee", "origin": "Vevey / India", "logo_text": "NESTLE", "sort_order": 5},
+    {"name": "Tata Sampann", "logo": "🌿", "category": "Dal & Spices", "origin": "Mumbai, MH", "logo_text": "TATA", "sort_order": 6},
+    {"name": "Mother Dairy", "logo": "🍦", "category": "Dairy & Curd", "origin": "Noida, UP", "logo_text": "MD", "sort_order": 7},
+    {"name": "Cadbury", "logo": "🍫", "category": "Chocolates", "origin": "Mumbai, MH", "logo_text": "CADBURY", "sort_order": 8},
+]
+
+DEFAULT_COUPONS = [
+    {"code": "WELCOME100", "discount_label": "FLAT ₹100 OFF", "desc": "On grocery orders above ₹499",
+     "tag": "NEW USER", "discount_type": "FLAT", "discount_value": 100, "min_order": 499, "first_order_only": True},
+    {"code": "ZEPTO20", "discount_label": "20% OFF", "desc": "Save up to ₹80 on daily staples",
+     "tag": "POPULAR", "discount_type": "PERCENT", "discount_value": 20, "min_order": 299, "max_discount": 80},
+    {"code": "FREESHIP", "discount_label": "FREE DELIVERY", "desc": "Zero delivery fee on your entire basket",
+     "tag": "FREE SHIP", "discount_type": "FLAT", "discount_value": 15, "min_order": 199},
+    {"code": "DAIRY50", "discount_label": "15% OFF", "desc": "Save on Milk, Paneer & Ghee essentials",
+     "tag": "DAIRY DEAL", "discount_type": "PERCENT", "discount_value": 15, "min_order": 350, "max_discount": 50},
+]
+
+
+def _seed_cms_defaults(db):
+    from models import Banner, FlashDeal, Brand, Coupon, AppSetting
+
+    if db.query(Banner).count() == 0:
+        for b in DEFAULT_BANNERS:
+            db.add(Banner(**b))
+        print("Seeded default banners.")
+
+    if db.query(FlashDeal).count() == 0:
+        for d in DEFAULT_FLASH_DEALS:
+            db.add(FlashDeal(**d))
+        print("Seeded default flash deals.")
+
+    if db.query(Brand).count() == 0:
+        for br in DEFAULT_BRANDS:
+            db.add(Brand(**br))
+        print("Seeded default brands.")
+
+    if db.query(Coupon).count() == 0:
+        for c in DEFAULT_COUPONS:
+            db.add(Coupon(**c))
+        print("Seeded default coupons.")
+
+    if db.query(AppSetting).count() == 0:
+        db.add(AppSetting(key="announcement", value="⚡ FAST EXPRESS DELIVERY — DIRECT FROM YOUR LOCAL KIRANA STORE"))
+        db.add(AppSetting(key="support_phone", value="+91 9811223344"))
+        print("Seeded default app settings.")
+
+    db.commit()

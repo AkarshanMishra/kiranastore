@@ -487,6 +487,15 @@ export default function App() {
               setFilterDiscountedOnly={setFilterDiscountedOnly}
             />
 
+            <FlashSaleBanner
+              onSelectOfferCategory={() => setActiveTab('offers')}
+            />
+
+            <BrandsSection
+              selectedBrand={selectedBrand}
+              onSelectBrand={setSelectedBrand}
+            />
+
             {/* 3. Sleek 1-Line Monthly Rashan Strip */}
             <MonthlyRashanSection
               onAddToCart={addToCart}

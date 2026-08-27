@@ -1,8 +1,9 @@
-import React from 'react';
-import { Tag, Sparkles, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import { fetchApi } from '../apiClient';
 
 export default function BrandsSection({ onSelectBrand, selectedBrand }) {
-  const brands = [
+  const fallbackBrands = [
     { name: 'All Brands', logo: '🏷️', sub: 'All Items' },
     { name: 'Amul', logo: '🥛', sub: 'Dairy & Ghee' },
     { name: 'Aashirvaad', logo: '🌾', sub: 'Atta & Salt' },
@@ -13,6 +14,38 @@ export default function BrandsSection({ onSelectBrand, selectedBrand }) {
     { name: 'Mother Dairy', logo: '🍦', sub: 'Dairy & Curd' },
     { name: 'Cadbury', logo: '🍫', sub: 'Chocolates' }
   ];
+  const [brands, setBrands] = useState(fallbackBrands);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBrands = async () => {
+      try {
+        const res = await fetchApi('/api/brands');
+        if (!res.ok) throw new Error('Failed to load brands');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setBrands([
+            fallbackBrands[0],
+            ...data.map((brand) => ({
+              name: brand.name,
+              logo: brand.logo || '🏷️',
+              sub: brand.category || 'Brand Store'
+            }))
+          ]);
+        }
+      } catch (err) {
+        if (isMounted) setBrands(fallbackBrands);
+      }
+    };
+
+    loadBrands();
+    window.addEventListener('api_base_url_changed', loadBrands);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('api_base_url_changed', loadBrands);
+    };
+  }, []);
 
   return (
     <div className="my-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border border-gray-100 dark:border-slate-700 shadow-sm">

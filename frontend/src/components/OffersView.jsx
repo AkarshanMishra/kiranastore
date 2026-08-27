@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tag, Sparkles, Clock, Copy, Check, ShieldCheck, Gift, Flame, Percent, ArrowRight } from 'lucide-react';
 import ProductCard from './ProductCard';
+import { fetchApi } from '../apiClient';
 
 export default function OffersView({
   products = [],
@@ -14,12 +15,42 @@ export default function OffersView({
   const [copiedCode, setCopiedCode] = useState(null);
   const [selectedOfferFilter, setSelectedOfferFilter] = useState('ALL'); // 'ALL' | 'FLASH' | 'BOGO' | 'UNDER_100'
 
-  const coupons = [
+  const fallbackCoupons = [
     { code: 'WELCOME100', discount: 'FLAT ₹100 OFF', desc: 'On grocery orders above ₹499', tag: 'NEW USER' },
     { code: 'ZEPTO20', discount: '20% OFF', desc: 'Save up to ₹80 on daily staples', tag: 'POPULAR' },
     { code: 'FREESHIP', discount: 'FREE DELIVERY', desc: 'Zero delivery fee on your entire basket', tag: 'FREE SHIP' },
     { code: 'DAIRY50', discount: '15% OFF', desc: 'Save on Milk, Paneer & Ghee essentials', tag: 'DAIRY DEAL' }
   ];
+  const [coupons, setCoupons] = useState(fallbackCoupons);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCoupons = async () => {
+      try {
+        const res = await fetchApi('/api/coupons');
+        if (!res.ok) throw new Error('Failed to load coupons');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setCoupons(data.map((coupon) => ({
+            code: coupon.code,
+            discount: coupon.discount_label || (coupon.discount_type === 'PERCENT' ? `${coupon.discount_value}% OFF` : `FLAT ₹${coupon.discount_value} OFF`),
+            desc: coupon.desc || `Use code ${coupon.code} at checkout`,
+            tag: coupon.tag || 'PROMO'
+          })));
+        }
+      } catch (err) {
+        if (isMounted) setCoupons(fallbackCoupons);
+      }
+    };
+
+    loadCoupons();
+    window.addEventListener('api_base_url_changed', loadCoupons);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('api_base_url_changed', loadCoupons);
+    };
+  }, []);
 
   const handleCopy = (code) => {
     navigator.clipboard.writeText(code);

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import Base, engine
-from routers import products, orders, admin, websocket
+from routers import products, orders, admin, websocket, content
 from seed import seed_database
 from migrate import run_migrations
 
@@ -29,6 +29,7 @@ app.include_router(products.router)
 app.include_router(orders.router)
 app.include_router(admin.router)
 app.include_router(websocket.router)
+app.include_router(content.router)
 
 @app.on_event("startup")
 def on_startup():

@@ -14,7 +14,7 @@ class CategorySchema(BaseModel):
 
 class ProductSchema(BaseModel):
     id: int
-    category_id: int
+    category_id: Optional[int] = None
     name: str
     weight_unit: str
     price: float
@@ -38,6 +38,17 @@ class ProductCreateUpdateSchema(BaseModel):
     stock: int
     in_stock: bool = True
     image_url: str
+    description: Optional[str] = None
+
+class ProductUpdateSchema(BaseModel):
+    category_id: Optional[int] = None
+    name: Optional[str] = None
+    weight_unit: Optional[str] = None
+    price: Optional[float] = None
+    discount_price: Optional[float] = None
+    stock: Optional[int] = None
+    in_stock: Optional[bool] = None
+    image_url: Optional[str] = None
     description: Optional[str] = None
 
 class OrderItemCreateSchema(BaseModel):
@@ -220,6 +231,103 @@ class ChatMessageSchema(BaseModel):
     sender: str
     text: str
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------
+# CMS CONTENT SCHEMAS (banners, flash deals, brands, coupons)
+# ---------------------------------------------------------------
+
+class BannerCreateSchema(BaseModel):
+    badge: Optional[str] = None
+    headline: str
+    subtext: Optional[str] = None
+    cta: Optional[str] = None
+    perk: Optional[str] = None
+    icon: Optional[str] = "🛒"
+    bg_gradient: Optional[str] = "from-emerald-950 via-teal-900 to-emerald-900"
+    accent_border: Optional[str] = "border-emerald-500/40"
+    badge_color: Optional[str] = "bg-emerald-500/20 text-emerald-300 border-emerald-400/40"
+    cta_target: Optional[str] = None
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+
+class BannerSchema(BannerCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FlashDealCreateSchema(BaseModel):
+    title: str
+    discount_label: Optional[str] = None
+    tag: Optional[str] = None
+    price_label: Optional[str] = None
+    mrp_label: Optional[str] = None
+    image_url: Optional[str] = None
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+
+class FlashDealSchema(FlashDealCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class BrandCreateSchema(BaseModel):
+    name: str
+    logo: Optional[str] = None
+    category: Optional[str] = None
+    origin: Optional[str] = None
+    logo_text: Optional[str] = None
+    sort_order: Optional[int] = 0
+    is_featured: Optional[bool] = True
+    is_active: Optional[bool] = True
+
+
+class BrandSchema(BrandCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CouponCreateSchema(BaseModel):
+    code: str
+    tag: Optional[str] = None
+    discount_label: Optional[str] = None
+    desc: Optional[str] = None
+    discount_type: Optional[str] = "FLAT"      # FLAT | PERCENT
+    discount_value: Optional[float] = 0
+    min_order: Optional[float] = 0
+    max_discount: Optional[float] = 0
+    valid_till: Optional[str] = None
+    first_order_only: Optional[bool] = False
+    usage_limit: Optional[int] = 1000
+    used_count: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+
+class CouponSchema(CouponCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AppSettingSchema(BaseModel):
+    key: str
+    value: Optional[str] = None
 
     class Config:
         from_attributes = True
