@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage, Category
+from models import Order, Product, OrderItem, Customer, SupportTicket, Notification, ChatMessage, Category, AdminUser, AuditLog, IntegrationConfig, AppSetting
 from schemas import (
     OrderSchema,
     OrderStatusUpdateSchema,
@@ -19,7 +19,15 @@ from schemas import (
     NotificationCreateSchema,
     NotificationSchema,
     ChatMessageCreateSchema,
-    ChatMessageSchema
+    ChatMessageSchema,
+    AdminUserCreateSchema,
+    AdminUserUpdateSchema,
+    AdminUserSchema,
+    AuditLogCreateSchema,
+    AuditLogSchema,
+    IntegrationConfigCreateSchema,
+    IntegrationConfigSchema,
+    AppSettingSchema
 )
 from routers.websocket import manager
 
@@ -361,3 +369,154 @@ def get_all_reviews(db: Session = Depends(get_db)):
             "status": "APPROVED"
         })
     return results
+
+
+# ======================= ADMIN USERS CRUD (RBAC & SECURITY) =======================
+@router.get("/users", response_model=List[AdminUserSchema])
+def get_all_admin_users(db: Session = Depends(get_db)):
+    return db.query(AdminUser).order_by(AdminUser.created_at.asc()).all()
+
+@router.post("/users", response_model=AdminUserSchema)
+def create_admin_user(payload: AdminUserCreateSchema, db: Session = Depends(get_db)):
+    existing = db.query(AdminUser).filter(AdminUser.email == payload.email.strip().lower()).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Admin user with this email already exists")
+    user = AdminUser(
+        name=payload.name.strip(),
+        email=payload.email.strip().lower(),
+        role=payload.role or "Store Manager",
+        permissions=payload.permissions or "All Standard Modules",
+        status=payload.status or "ACTIVE",
+        two_factor_enabled=payload.two_factor_enabled if payload.two_factor_enabled is not None else True
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.patch("/users/{user_id}", response_model=AdminUserSchema)
+def update_admin_user(user_id: int, payload: AdminUserUpdateSchema, db: Session = Depends(get_db)):
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+    if payload.name is not None:
+        user.name = payload.name.strip()
+    if payload.email is not None:
+        user.email = payload.email.strip().lower()
+    if payload.role is not None:
+        user.role = payload.role
+    if payload.permissions is not None:
+        user.permissions = payload.permissions
+    if payload.status is not None:
+        user.status = payload.status
+    if payload.two_factor_enabled is not None:
+        user.two_factor_enabled = payload.two_factor_enabled
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.delete("/users/{user_id}")
+def delete_admin_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(AdminUser).filter(AdminUser.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+    db.delete(user)
+    db.commit()
+    return {"message": "Admin user deleted successfully"}
+
+
+# ======================= AUDIT LOGS CRUD =======================
+@router.get("/audit-logs", response_model=List[AuditLogSchema])
+def get_all_audit_logs(db: Session = Depends(get_db)):
+    return db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(200).all()
+
+@router.post("/audit-logs", response_model=AuditLogSchema)
+def create_audit_log(payload: AuditLogCreateSchema, db: Session = Depends(get_db)):
+    import random
+    log_id = f"LOG-{random.randint(1000, 9999)}"
+    log = AuditLog(
+        log_id=log_id,
+        actor=payload.actor,
+        action=payload.action,
+        category=payload.category or "OPERATIONS",
+        target=payload.target,
+        details=payload.details,
+        ip_address=payload.ip_address or "106.210.84.192"
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
+
+@router.delete("/audit-logs")
+def clear_audit_logs(db: Session = Depends(get_db)):
+    db.query(AuditLog).delete()
+    db.commit()
+    return {"message": "Audit logs cleared"}
+
+
+# ======================= INTEGRATIONS CRUD =======================
+@router.get("/integrations", response_model=List[IntegrationConfigSchema])
+def get_all_integrations(db: Session = Depends(get_db)):
+    return db.query(IntegrationConfig).order_by(IntegrationConfig.created_at.asc()).all()
+
+@router.post("/integrations", response_model=IntegrationConfigSchema)
+def upsert_integration(payload: IntegrationConfigCreateSchema, db: Session = Depends(get_db)):
+    existing = db.query(IntegrationConfig).filter(IntegrationConfig.integration_id == payload.integration_id).first()
+    if existing:
+        existing.name = payload.name
+        existing.desc = payload.desc
+        existing.key_id = payload.key_id
+        existing.secret_key = payload.secret_key
+        existing.webhook_url = payload.webhook_url
+        existing.category = payload.category
+        existing.environment = payload.environment
+        existing.status = payload.status
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        new_int = IntegrationConfig(
+            integration_id=payload.integration_id,
+            name=payload.name,
+            desc=payload.desc,
+            key_id=payload.key_id,
+            secret_key=payload.secret_key,
+            webhook_url=payload.webhook_url,
+            category=payload.category,
+            environment=payload.environment,
+            status=payload.status
+        )
+        db.add(new_int)
+        db.commit()
+        db.refresh(new_int)
+        return new_int
+
+@router.delete("/integrations/{integration_id}")
+def delete_integration(integration_id: str, db: Session = Depends(get_db)):
+    item = db.query(IntegrationConfig).filter(IntegrationConfig.integration_id == integration_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    db.delete(item)
+    db.commit()
+    return {"message": "Integration deleted successfully"}
+
+
+# ======================= APP SETTINGS CRUD =======================
+@router.get("/settings")
+def get_admin_settings(db: Session = Depends(get_db)):
+    settings = db.query(AppSetting).all()
+    return {s.key: s.value for s in settings}
+
+@router.post("/settings")
+def save_admin_settings(payload: dict, db: Session = Depends(get_db)):
+    for key, value in payload.items():
+        if value is not None:
+            existing = db.query(AppSetting).filter(AppSetting.key == key).first()
+            if existing:
+                existing.value = str(value)
+            else:
+                db.add(AppSetting(key=key, value=str(value)))
+    db.commit()
+    return {"message": "Settings saved successfully"}
+

@@ -214,3 +214,51 @@ class AppSetting(Base):
     key = Column(String, nullable=False, unique=True)     # e.g. "announcement"
     value = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AdminUser(Base):
+    """System & administrative team accounts."""
+    __tablename__ = "admin_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    role = Column(String, default="Store Manager") # Super Admin, Store Manager, Order Manager, Inventory Manager, Delivery Manager, Finance Lead, Security Officer
+    permissions = Column(String, default="All Standard Modules")
+    status = Column(String, default="ACTIVE") # ACTIVE, SUSPENDED, INVITED
+    last_login = Column(String, default="Just now")
+    two_factor_enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AuditLog(Base):
+    """Immutable audit trail of administrative actions."""
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    log_id = Column(String, unique=True, index=True) # e.g. "LOG-9482"
+    actor = Column(String, nullable=False)           # e.g. "Super Admin (Akarshan)"
+    action = Column(String, nullable=False)          # e.g. "PRICE_UPDATE", "STOCK_RESTOCK"
+    category = Column(String, default="OPERATIONS")  # AUTH, ORDERS, INVENTORY, SECURITY, SYSTEM
+    target = Column(String, nullable=False)          # e.g. "Aashirvaad Atta 5kg"
+    details = Column(String, nullable=True)
+    ip_address = Column(String, default="106.210.84.192")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class IntegrationConfig(Base):
+    """API credentials & webhook configs for external integrations."""
+    __tablename__ = "integration_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    integration_id = Column(String, unique=True, index=True) # e.g. "razorpay", "whatsapp"
+    name = Column(String, nullable=False)
+    desc = Column(String, nullable=True)
+    key_id = Column(String, nullable=True)
+    secret_key = Column(String, nullable=True)
+    webhook_url = Column(String, nullable=True)
+    category = Column(String, default="PAYMENTS") # PAYMENTS, MESSAGING, LOCATION, SMS, NOTIFICATIONS, ANALYTICS
+    environment = Column(String, default="PRODUCTION") # SANDBOX, PRODUCTION
+    status = Column(String, default="CONNECTED") # CONNECTED, PAUSED, ERROR
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+

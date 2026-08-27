@@ -527,7 +527,7 @@ DEFAULT_COUPONS = [
 
 
 def _seed_cms_defaults(db):
-    from models import Banner, FlashDeal, Brand, Coupon, AppSetting
+    from models import Banner, FlashDeal, Brand, Coupon, AppSetting, AdminUser, AuditLog, IntegrationConfig
 
     if db.query(Banner).count() == 0:
         for b in DEFAULT_BANNERS:
@@ -552,6 +552,44 @@ def _seed_cms_defaults(db):
     if db.query(AppSetting).count() == 0:
         db.add(AppSetting(key="announcement", value="⚡ FAST EXPRESS DELIVERY — DIRECT FROM YOUR LOCAL KIRANA STORE"))
         db.add(AppSetting(key="support_phone", value="+91 9811223344"))
+        db.add(AppSetting(key="store_name", value="KiranaStore QuickCommerce Pvt Ltd"))
+        db.add(AppSetting(key="gstin", value="07AAACK9842K1Z9"))
+        db.add(AppSetting(key="sla_minutes", value="10"))
         print("Seeded default app settings.")
+
+    if db.query(AdminUser).count() == 0:
+        sample_admins = [
+            AdminUser(name="Akarshan Mishra", email="admin@kiranastore.com", role="Super Admin", permissions="Full Access (All Modules)", status="ACTIVE", two_factor_enabled=True),
+            AdminUser(name="Amit Varma", email="amit.v@kiranastore.com", role="Store Manager", permissions="Orders, Inventory, Delivery", status="ACTIVE", two_factor_enabled=True),
+            AdminUser(name="Sandeep Rai", email="sandeep@kiranastore.com", role="Inventory Manager", permissions="Stock, Products, Suppliers", status="ACTIVE", two_factor_enabled=False),
+            AdminUser(name="Neha Kapoor", email="neha.k@kiranastore.com", role="Marketing Manager", permissions="Offers, Coupons, Banners", status="ACTIVE", two_factor_enabled=True),
+        ]
+        for sa in sample_admins:
+            db.add(sa)
+        print("Seeded default admin users.")
+
+    if db.query(AuditLog).count() == 0:
+        sample_logs = [
+            AuditLog(log_id="LOG-9482", actor="Super Admin (Akarshan)", action="ACCEPTED_ORDER_SCHEDULE", category="ORDERS", target="Order #KS-94821", details="Scheduled delivery slot for Today (4:00 PM - 7:00 PM)", ip_address="106.210.84.192"),
+            AuditLog(log_id="LOG-9481", actor="Inventory Manager (Sandeep)", action="STOCK_RESTOCK", category="INVENTORY", target="Amul Taaza Milk 500ml", details="Stock increased from 18 → 80 pcs (+62 units)", ip_address="106.210.84.192"),
+            AuditLog(log_id="LOG-9480", actor="Super Admin (Akarshan)", action="PRICE_UPDATE", category="INVENTORY", target="Aashirvaad Chakki Atta 5kg", details="Discount price updated: ₹225 → ₹219", ip_address="106.210.84.192"),
+            AuditLog(log_id="LOG-9479", actor="Store Manager (Amit)", action="ASSIGN_RIDER", category="ORDERS", target="Order #KS-94820", details="Assigned rider Rahul Kumar (+91 9811223344)", ip_address="106.210.84.192"),
+            AuditLog(log_id="LOG-9478", actor="Marketing Admin (Neha)", action="COUPON_CREATED", category="SYSTEM", target="Coupon ZEPTO20", details="Created 20% discount coupon code capped at ₹80", ip_address="106.210.84.192"),
+        ]
+        for sl in sample_logs:
+            db.add(sl)
+        print("Seeded default audit logs.")
+
+    if db.query(IntegrationConfig).count() == 0:
+        sample_integrations = [
+            IntegrationConfig(integration_id="razorpay", name="Razorpay Payment Gateway", desc="UPI, Credit/Debit Cards, Net Banking & Instant Refunds", key_id="rzp_test_94827101928", secret_key="rzp_sec_***8492", webhook_url="https://api.kiranastore.com/api/webhooks/razorpay", category="PAYMENTS", environment="PRODUCTION", status="CONNECTED"),
+            IntegrationConfig(integration_id="whatsapp", name="WhatsApp Business Cloud API", desc="Real-time order dispatch updates & OTP login via Meta", key_id="WABA_984719281726", secret_key="meta_token_***918", webhook_url="https://api.kiranastore.com/api/webhooks/whatsapp", category="MESSAGING", environment="PRODUCTION", status="CONNECTED"),
+            IntegrationConfig(integration_id="maps", name="Google Maps & Geolocation API", desc="Address autocomplete & reverse geocoding pin-drop", key_id="AIzaSyD984729182749102847", category="LOCATION", environment="PRODUCTION", status="CONNECTED"),
+            IntegrationConfig(integration_id="msg91", name="Fast2SMS / MSG91 Gateway", desc="High-speed transactional SMS receipts & rider alerts", key_id="SMS_AUTH_KEY_84920", category="SMS", environment="PRODUCTION", status="CONNECTED"),
+            IntegrationConfig(integration_id="firebase", name="Firebase Cloud Messaging (FCM)", desc="Mobile push notification delivery engine", key_id="fcm-kiranastore-service-account.json", category="NOTIFICATIONS", environment="PRODUCTION", status="CONNECTED"),
+        ]
+        for si in sample_integrations:
+            db.add(si)
+        print("Seeded default integrations.")
 
     db.commit()

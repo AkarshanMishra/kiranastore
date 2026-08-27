@@ -331,3 +331,65 @@ class AppSettingSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AdminUserCreateSchema(BaseModel):
+    name: str
+    email: str
+    role: Optional[str] = "Store Manager"
+    permissions: Optional[str] = "All Standard Modules"
+    status: Optional[str] = "ACTIVE"
+    two_factor_enabled: Optional[bool] = True
+
+class AdminUserUpdateSchema(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    permissions: Optional[str] = None
+    status: Optional[str] = None
+    two_factor_enabled: Optional[bool] = None
+
+class AdminUserSchema(AdminUserCreateSchema):
+    id: int
+    last_login: Optional[str] = "Just now"
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AuditLogCreateSchema(BaseModel):
+    actor: str
+    action: str
+    category: Optional[str] = "OPERATIONS"
+    target: str
+    details: Optional[str] = None
+    ip_address: Optional[str] = "106.210.84.192"
+
+class AuditLogSchema(AuditLogCreateSchema):
+    id: int
+    log_id: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class IntegrationConfigCreateSchema(BaseModel):
+    integration_id: str
+    name: str
+    desc: Optional[str] = None
+    key_id: Optional[str] = None
+    secret_key: Optional[str] = None
+    webhook_url: Optional[str] = None
+    category: Optional[str] = "PAYMENTS"
+    environment: Optional[str] = "PRODUCTION"
+    status: Optional[str] = "CONNECTED"
+
+class IntegrationConfigSchema(IntegrationConfigCreateSchema):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
